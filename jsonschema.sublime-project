@@ -1,0 +1,21 @@
+{
+    "folders":
+    [
+        {
+            "name": "/",
+            "follow_symlinks": true,
+            "path": "."
+        }
+    ],
+    "build_systems":
+    [
+        {
+            "name": "Format Go code",
+            "cmd": ["go", "fmt", "$file"]
+        },
+        {
+            "name": "Build on krum",
+            "cmd": ["docker", "-H", "krum:2376", "build", "-t", "$project_base_name", "."]
+        }
+    ]
+}
