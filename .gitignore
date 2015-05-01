@@ -1,0 +1,25 @@
+
+# Runtime generated files
+*.log
+*.sqlite
+*.out
+
+# vim edit files
+.*.swo
+.*.swp
+
+# Sublime files
+*.sublime-workspace
+
+# OS Files
+.DS_Store*
+Icon?
+Thumbs.db
+
+#temporary files
+tmp
+
+# docs build output dir
+docs/build
+dist/
+build/

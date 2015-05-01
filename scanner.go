@@ -14,7 +14,7 @@ const TOK_NULL = "null"
 type TokenType int
 
 const (
-	tokenError TokenType = iota // an IO error
+	tokenError TokenType = iota // an IO error (legit or EOF)
 
 	tokenObjectBegin
 	tokenObjectEnd
@@ -27,7 +27,6 @@ const (
 	tokenFalse
 	tokenNull
 
-	tokenEnd        // we're at the end of the stream
 	tokenParseError // an un-parsable string was proveded
 )
 
@@ -56,8 +55,6 @@ func (t TokenType) String() string {
 		return TOK_FALSE
 	case tokenNull:
 		return TOK_NULL
-	case tokenEnd:
-		return "End of input"
 	case tokenParseError:
 		return "Parse Error"
 	default:
@@ -134,10 +131,9 @@ Upon subsequent Read* calls, it may be overwritten or de-allocated.
 
 On error, the returned byte slice will be the entire remaining read buffer.
 
-There are 3 types of error:
- 1. tokenEnd: There is no more data available
- 2. tokenError: An IO error was encountered, socket dropped, etc.
- 3. tokenParseError: We have the bytes, but they were malformed.
+There are 2 types of error:
+ 1. tokenError: An IO error was encountered, EOF, socket dropped, etc.
+ 2. tokenParseError: We have the bytes, but they were malformed.
 */
 func (s *Scanner) ReadToken() (TokenType, []byte, error) {
 	// move to first non-space char (s.buf[s.roff] != space)
@@ -148,11 +144,7 @@ func (s *Scanner) ReadToken() (TokenType, []byte, error) {
 
 	// have we run out of data?
 	if s.roff >= len(s.buf) {
-		var tok TokenType
-		if s.rerr == io.EOF {
-			tok = tokenEnd
-		}
-		return tok, s.buf[s.roff:], s.rerr
+		return tokenError, s.buf[s.roff:], s.rerr
 	}
 
 	// cover off single character token
@@ -273,12 +265,7 @@ func (s *Scanner) ReadToken() (TokenType, []byte, error) {
 	}
 
 	if s.rerr != nil {
-		if s.rerr == io.EOF {
-			tok = tokenEnd
-		} else {
-			tok = tokenError
-		}
-		return tok, s.buf[s.roff:], s.rerr
+		return tokenError, s.buf[s.roff:], s.rerr
 	} else {
 		panic("Didn't get any more data but didn't get an EOF")
 	}
