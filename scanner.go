@@ -3,6 +3,7 @@ package jsonschema
 import (
 	"fmt"
 	"io"
+	"strconv"
 	"unicode"
 )
 
@@ -113,16 +114,35 @@ func (s *Scanner) ReadNull() error {
 Reads a single number value. Returning it's characters. Returns an error if the
 next token is not a valid or is not a number.
 */
-/*
-func (s *Scanner) ReadNumber() ([]byte, error) {
+
+func (s *Scanner) ReadInteger() (int64, error) {
+	tok, buf, err := s.ReadToken()
+	if tok == tokenError {
+		return 0, err
+	} else if tok == tokenParseError {
+		// TODO: Make generic parse error
+		return 0, fmt.Errorf(ERROR_PARSE_INT, err.Error())
+	} else if tok != tokenNumber {
+		// TODO: return "got type X, expected type Y"
+		return 0, fmt.Errorf(ERROR_INVALID_INT, string(buf))
+	}
+
+	tv, err := strconv.ParseInt(string(buf), 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return tv, nil
 }
 
 func (s *Scanner) ReadBool() (bool, error) {
+	return true, nil
 }
 
-func (s *Scanner) ReadString() ([]byte, error) {
+func (s *Scanner) ReadString() (string, error) {
+	return "", nil
 }
-*/
+
 /*
 Reads in one JSON token.
 
