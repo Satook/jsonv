@@ -87,6 +87,8 @@ func Test_SchemaTypeParseErrors(t *testing.T) {
 		s = NewScanner(&ErrorReader{})
 		if err := c.t.Parse("", s, c.dest); err == nil {
 			t.Errorf("Case %d RandomError: Didn't get any error", i)
+		} else if _, ok := err.(ValidationError); ok {
+			t.Errorf("Case %d RandomError: Got validation error %v, want IO error", i, err)
 		}
 	}
 }
