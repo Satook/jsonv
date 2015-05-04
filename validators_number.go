@@ -5,13 +5,7 @@ import (
 	"math"
 )
 
-const (
-	MAX_EX_ERROR = "Must be less than %v"
-	MAX_ERROR    = "Must be less than or equal to %v"
-	MIN_EX_ERROR = "Must be greater than %v"
-	MIN_ERROR    = "Must be greater than or equal to %v"
-	MULOF_ERROR  = "Must be a multiple of %v"
-)
+const ()
 
 /*
 Used to identify validators that can work on Integer values.
@@ -46,7 +40,7 @@ func MinI(m int64) IntegerValidator {
 		if i >= m {
 			return nil
 		} else {
-			return fmt.Errorf(MIN_ERROR, m)
+			return fmt.Errorf(ERROR_MIN, m)
 		}
 	})
 }
@@ -61,7 +55,7 @@ func MinEI(m int64) IntegerValidator {
 		if i > m {
 			return nil
 		} else {
-			return fmt.Errorf(MIN_EX_ERROR, m)
+			return fmt.Errorf(ERROR_MIN_EX, m)
 		}
 	})
 }
@@ -76,7 +70,7 @@ func MaxI(m int64) IntegerValidator {
 		if i <= m {
 			return nil
 		} else {
-			return fmt.Errorf(MAX_ERROR, m)
+			return fmt.Errorf(ERROR_MAX, m)
 		}
 	})
 }
@@ -91,7 +85,7 @@ func MaxEI(m int64) IntegerValidator {
 		if i < m {
 			return nil
 		} else {
-			return fmt.Errorf(MAX_EX_ERROR, m)
+			return fmt.Errorf(ERROR_MAX_EX, m)
 		}
 	})
 }
@@ -107,7 +101,7 @@ func MulOfI(m int64) IntegerValidator {
 		if i%m == 0 {
 			return nil
 		} else {
-			return fmt.Errorf(MULOF_ERROR, m)
+			return fmt.Errorf(ERROR_MULOF, m)
 		}
 	})
 }
@@ -122,7 +116,7 @@ func MinF(m float64) FloatValidator {
 		if i >= m {
 			return nil
 		} else {
-			return fmt.Errorf(MIN_ERROR, m)
+			return fmt.Errorf(ERROR_MIN, m)
 		}
 	})
 }
@@ -137,7 +131,7 @@ func MinEF(m float64) FloatValidator {
 		if f > m {
 			return nil
 		} else {
-			return fmt.Errorf(MIN_EX_ERROR, m)
+			return fmt.Errorf(ERROR_MIN_EX, m)
 		}
 	})
 }
@@ -152,7 +146,7 @@ func MaxF(m float64) FloatValidator {
 		if f <= m {
 			return nil
 		} else {
-			return fmt.Errorf(MAX_ERROR, m)
+			return fmt.Errorf(ERROR_MAX, m)
 		}
 	})
 }
@@ -167,7 +161,7 @@ func MaxEF(m float64) FloatValidator {
 		if i < m {
 			return nil
 		} else {
-			return fmt.Errorf(MAX_EX_ERROR, m)
+			return fmt.Errorf(ERROR_MAX_EX, m)
 		}
 	})
 }
@@ -183,7 +177,7 @@ func MulOfF(m float64) FloatValidator {
 		if math.Mod(f, m) == 0 {
 			return nil
 		} else {
-			return fmt.Errorf(MULOF_ERROR, m)
+			return fmt.Errorf(ERROR_MULOF, m)
 		}
 	})
 }

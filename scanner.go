@@ -12,6 +12,18 @@ const TOK_TRUE = "true"
 const TOK_FALSE = "false"
 const TOK_NULL = "null"
 
+type ParseError struct {
+	e string
+}
+
+func NewParseError(e string) error {
+	return &ParseError{e}
+}
+
+func (p *ParseError) Error() string {
+	return p.e
+}
+
 type TokenType int
 
 const (
@@ -292,7 +304,7 @@ func (s *Scanner) ReadToken() (TokenType, []byte, error) {
 }
 
 /*
-Will read in data in until there is at least count bytes in the buffer
+Will read in data in until there is at least count bytes in the buffer.
 */
 func (s *Scanner) atLeast(count int) error {
 	for len(s.buf) < s.roff+count {
@@ -304,22 +316,12 @@ func (s *Scanner) atLeast(count int) error {
 }
 
 /*
-Will keep reading in data until we get the specified character
-
-Return semantics are the same as bytesUntilPred
-*/
-func (s *Scanner) bytesUntil(offset int, c byte) (int, error) {
-	return s.bytesUntilPred(offset, func(b byte) bool { return b == c })
-}
-
-/*
 Reads from s.roff+offset until it finds a byte where the pred returns true.
 Returns the offset of that byte, relative to s.roff.
 */
 func (s *Scanner) bytesUntilPred(offset int, p bytePred) (int, error) {
 	for i := 0; i < 1024; i += 1 {
 		// make sure there's at least 1-byte to read
-		fmt.Printf("Prefil: (R: %d, O: %d, L: %d)\n", s.roff, offset, len(s.buf))
 		for len(s.buf) <= s.roff+offset {
 			if err := s.fillBuffer(); err != nil {
 				return offset, err
@@ -327,7 +329,6 @@ func (s *Scanner) bytesUntilPred(offset int, p bytePred) (int, error) {
 		}
 
 		// scan through current read buff
-		fmt.Printf("Scanning %q for something.\n", s.buf[s.roff+offset:])
 		for _, c := range s.buf[s.roff+offset:] {
 			fmt.Printf("Checking char %c\n", c)
 			if p(c) {
@@ -336,10 +337,9 @@ func (s *Scanner) bytesUntilPred(offset int, p bytePred) (int, error) {
 				offset += 1
 			}
 		}
-
 	}
 
-	return offset, fmt.Errorf("1024 iterations and no result")
+	return offset, NewParseError("1024 iterations and no result")
 }
 
 /*
@@ -402,7 +402,7 @@ func numStateNeg(c byte) (NumParseState, error) {
 	} else if c >= '1' && c <= '9' {
 		return numState1, nil
 	} else {
-		return nil, fmt.Errorf("expected digit in number literal")
+		return nil, NewParseError("expected digit in number literal")
 	}
 }
 
@@ -441,7 +441,7 @@ func numStateDot(c byte) (NumParseState, error) {
 	if c >= '0' && c <= '9' {
 		return numStateDot0, nil
 	} else {
-		return nil, fmt.Errorf("expected digit in number literal")
+		return nil, NewParseError("expected digit in number literal")
 	}
 }
 
@@ -467,7 +467,7 @@ func numStateE(c byte) (NumParseState, error) {
 	} else if c == '-' || c == '+' {
 		return numStateESign, nil
 	} else {
-		return nil, fmt.Errorf("expected digit or sign after 'e' in number literal")
+		return nil, NewParseError("expected digit or sign after 'e' in number literal")
 	}
 }
 
@@ -478,7 +478,7 @@ func numStateESign(c byte) (NumParseState, error) {
 	if c >= '0' && c <= '9' {
 		return numStateE0, nil
 	} else {
-		return nil, fmt.Errorf("expected digit after exponent sign in number literal")
+		return nil, NewParseError("expected digit after exponent sign in number literal")
 	}
 }
 
