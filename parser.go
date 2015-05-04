@@ -7,10 +7,13 @@ import (
 )
 
 /*
-These are returned for any/all parsing errors.
+These are returned for parsing errors that don't render the input un-parsable.
 
-E.g. If the root cannot be parsed, the path will be "/" and the Error string a,
-hopefully, useful message for the client.
+E.g. 1: The failure of a validation requirement means that parsing can continue
+whereas a malformed number, e.g. "e22", would require parsing to stop.
+
+E.g. 2: If the root cannot be parsed, the path will be "/" and the Error string
+a, hopefully, useful message for the client.
 */
 type InvalidData struct {
 	Path  string
@@ -66,7 +69,13 @@ func (p *ValidatingParser) Parse(r io.Reader, v interface{}) []InvalidData {
 
 	s := NewScanner(r)
 
-	p.schema.Parse("/", s, v)
+	if err := p.schema.Parse("/", s, v); err != nil {
+		if verr, ok := err.(ValidationError); ok {
+			return verr
+		} else {
+			return NewSingleVErr("/", err.Error())
+		}
+	}
 
 	return nil
 }

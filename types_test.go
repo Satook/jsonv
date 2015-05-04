@@ -47,6 +47,9 @@ func Test_SchemaTypeParse(t *testing.T) {
 		{Integer(), "24", int64(24)},
 		{Integer(), "572", int64(572)},
 		{Integer(), "-572", int64(-572)},
+
+		{Boolean(), "true", true},
+		{Boolean(), "false", false},
 	}
 
 	for i, c := range cases {
@@ -65,21 +68,22 @@ func Test_SchemaTypeParseErrors(t *testing.T) {
 		dest interface{}
 	}{
 		{Integer(), "5.2", new(int64)},
+		{Integer(MinI(7)), "5", new(int64)},
+		{Integer(MaxI(3)), "5", new(int64)},
+
+		{Boolean(), "twwrue", new(bool)},
+		{Boolean(), "1", new(bool)},
 	}
 
 	for i, c := range cases {
-		// see if we get a validation error correctly
+		// see if we get a error as expected
 		if err := tryParse(c.t, c.json, c.dest, c.dest); err == nil {
 			t.Errorf("Case %d Valid: Didn't get any error", i)
-		} else if _, ok := err.(ValidationError); !ok {
-			t.Errorf("Case %d Valid: Got non-validation error %v, %v", i, reflect.TypeOf(err), err)
 		}
 
 		// see if it handles unexpected EOF correctly
 		s := NewScanner(&EOFReader{})
-		if err := c.t.Parse("", s, c.dest); err == nil {
-			t.Errorf("Case %d EOF: Didn't get any error", i)
-		} else if err != io.EOF {
+		if err := c.t.Parse("", s, c.dest); err != io.EOF {
 			t.Errorf("Case %d EOF: Got non-EOF error %v", i, err)
 		}
 

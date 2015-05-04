@@ -3,7 +3,6 @@ package jsonschema
 import (
 	"fmt"
 	"reflect"
-	"strconv"
 )
 
 /*
@@ -12,6 +11,10 @@ Used by Parser for parsing and validation of JSON types.
 Can return either a ValidationError or a general error if encountered
 This is used to allow the parser and it's clients to differentiate between
 validation errors and IO errors.
+
+If the error is just a vaidation error, but parsing can continue, the
+implementation should return a ValidationError, otherwise any other error type
+will be collected up with all errors accumulated so far and parsing stopped.
 */
 type SchemaType interface {
 	Parse(string, *Scanner, interface{}) error
@@ -50,13 +53,11 @@ func Array() {
 func String() {
 }
 
-func Number() {
-}
-
 type BooleanParser struct {
 }
 
-func Boolean() {
+func Boolean() *BooleanParser {
+	return &BooleanParser{}
 }
 
 func (p *BooleanParser) Parse(path string, s *Scanner, v interface{}) error {
@@ -64,8 +65,6 @@ func (p *BooleanParser) Parse(path string, s *Scanner, v interface{}) error {
 	// wasn't the correct type
 	if tok == tokenError {
 		return err
-	} else if tok == tokenParseError {
-		return NewSingleVErr(path, fmt.Sprintf(ERROR_PARSE_BOOL, err.Error()))
 	} else if tok != tokenTrue && tok != tokenFalse {
 		return NewSingleVErr(path, fmt.Sprintf(ERROR_INVALID_BOOL, string(buf)))
 	}
@@ -98,11 +97,7 @@ func Integer(vs ...IntegerValidator) *IntegerParser {
 func (p *IntegerParser) Parse(path string, s *Scanner, v interface{}) error {
 	tv, err := s.ReadInteger()
 	if err != nil {
-		if v, ok := err.(*strconv.NumError); ok {
-			return NewSingleVErr(path, fmt.Sprintf(ERROR_PARSE_INT, v.Error()))
-		} else {
-			return err
-		}
+		return err
 	}
 
 	// check the value

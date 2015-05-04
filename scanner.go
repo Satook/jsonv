@@ -39,8 +39,6 @@ const (
 	tokenTrue
 	tokenFalse
 	tokenNull
-
-	tokenParseError // an un-parsable string was proveded
 )
 
 /*
@@ -68,10 +66,8 @@ func (t TokenType) String() string {
 		return TOK_FALSE
 	case tokenNull:
 		return TOK_NULL
-	case tokenParseError:
-		return "Parse Error"
 	default:
-		return "IO Error"
+		return "Error"
 	}
 }
 
@@ -131,9 +127,6 @@ func (s *Scanner) ReadInteger() (int64, error) {
 	tok, buf, err := s.ReadToken()
 	if tok == tokenError {
 		return 0, err
-	} else if tok == tokenParseError {
-		// TODO: Make generic parse error
-		return 0, fmt.Errorf(ERROR_PARSE_INT, err.Error())
 	} else if tok != tokenNumber {
 		// TODO: return "got type X, expected type Y"
 		return 0, fmt.Errorf(ERROR_INVALID_INT, string(buf))
@@ -164,8 +157,9 @@ Upon subsequent Read* calls, it may be overwritten or de-allocated.
 On error, the returned byte slice will be the entire remaining read buffer.
 
 There are 2 types of error:
- 1. tokenError: An IO error was encountered, EOF, socket dropped, etc.
- 2. tokenParseError: We have the bytes, but they were malformed.
+ 1. General: An IO error was encountered, EOF, socket dropped, etc.
+ 2. ParseError: We have the bytes, but they were malformed, parsing cannot
+ continue.
 */
 func (s *Scanner) ReadToken() (TokenType, []byte, error) {
 	// move to first non-space char (s.buf[s.roff] != space)
@@ -225,7 +219,7 @@ func (s *Scanner) ReadToken() (TokenType, []byte, error) {
 				s.rcount += l
 				return tok, buf, nil
 			} else {
-				return tokenParseError, buf, nil
+				return tokenError, buf, NewParseError("Expected " + lookFor)
 			}
 		}
 	} else if first == '"' {
@@ -276,7 +270,7 @@ func (s *Scanner) ReadToken() (TokenType, []byte, error) {
 			state, perr = state(s.buf[s.roff+offset])
 			if perr != nil {
 				// parse error
-				return tokenParseError, s.buf[s.roff:], s.rerr
+				return tokenError, s.buf[s.roff:], s.rerr
 			} else if state == nil {
 				// finished
 				break
