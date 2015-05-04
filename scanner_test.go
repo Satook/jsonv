@@ -21,6 +21,8 @@ func Test_scannerTokens(t *testing.T) {
 		{"}", tokenObjectEnd, []byte("}")},
 		{"[", tokenArrayBegin, []byte("[")},
 		{"]", tokenArrayEnd, []byte("]")},
+		{`  , `, tokenItemSep, []byte(",")},
+		{`  : `, tokenPropSep, []byte(":")},
 		{"true", tokenTrue, []byte("true")},
 		{"false", tokenFalse, []byte("false")},
 		{"null", tokenNull, []byte("null")},

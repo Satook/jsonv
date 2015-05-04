@@ -1,9 +1,14 @@
 package jsonschema
 
 const (
+	// messages for bad destination types
+	ERROR_BAD_INT_DEST    = "Cannot assign integer to target variable of type %v, path %v"
+	ERROR_BAD_FLOAT_DEST  = "Cannot assign float to target variable of type %v, path %v"
+	ERROR_BAD_STRING_DEST = "Cannot assign string to target variable of type %v, path %v"
+	ERROR_BAD_BOOL_DEST   = "Cannot assign boolean to target variable of type %v, path %v"
+
 	ERROR_INVALID_INT   = "Must be an integer, got value %v"
 	ERROR_PARSE_INT     = "Error parsing integer, %v"
-	ERROR_BAD_INT_DEST  = "Cannot assign integer to target variable of type %v"
 	ERROR_INVALID_BOOL  = "Must be an boolean, got value %v"
 	ERROR_PARSE_BOOL    = "Error parsing bool, %v"
 	ERROR_MIN_LEN_STR   = "Must be at least %d characters long"

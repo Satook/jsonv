@@ -35,6 +35,9 @@ func Prop(n string, t SchemaType) ObjectProp {
 	return ObjectProp{n, t}
 }
 
+/*
+A simple mapping of a JSON object to a Golang Struct. This is quite strict
+*/
 type ObjectParser struct {
 	props []ObjectProp
 }
@@ -44,13 +47,40 @@ func Object(props ...ObjectProp) *ObjectParser {
 }
 
 func (p *ObjectParser) Parse(path string, s *Scanner, v interface{}) error {
+	// want a tokenObjectBegin
+	// want string
+	// want a tokenObjectBegin
+
 	return nil
 }
 
-func Array() {
+/*
+A simple parser that accepts only a JSON string value and stores the result in
+a *string.
+*/
+type StringParser struct {
+	vs []StringValidator
 }
 
-func String() {
+func String(vs ...StringValidator) *StringParser {
+	return &StringParser{vs}
+}
+
+func (p StringParser) Parse(path string, s *Scanner, v interface{}) error {
+	tok, buf, err := s.ReadToken()
+	if tok == tokenError {
+		return err
+	}
+
+	// now assign the value with whatever precision we can
+	switch t := v.(type) {
+	default:
+		return fmt.Errorf(ERROR_BAD_STRING_DEST, reflect.TypeOf(v), path)
+	case *string:
+		*t = string(buf)
+	}
+
+	return nil
 }
 
 type BooleanParser struct {
@@ -72,11 +102,7 @@ func (p *BooleanParser) Parse(path string, s *Scanner, v interface{}) error {
 	// now assign the value with whatever precision we can
 	switch t := v.(type) {
 	default:
-		// TODO: Give "wrong destination type" error
-		return NewSingleVErr(path, fmt.Sprintf(ERROR_INVALID_BOOL, string(buf)))
-	case *[]byte:
-		*t = make([]byte, len(buf))
-		copy(*t, buf)
+		return fmt.Errorf(ERROR_BAD_BOOL_DEST, reflect.TypeOf(v), path)
 	case *string:
 		*t = string(buf)
 	case *bool:
@@ -86,6 +112,10 @@ func (p *BooleanParser) Parse(path string, s *Scanner, v interface{}) error {
 	return nil
 }
 
+/*
+Accepts any whole-integer JSON number value and stores it in any Go integer
+primative type, e.g. int8, int16, uint8, etc.
+*/
 type IntegerParser struct {
 	vs []IntegerValidator
 }
@@ -130,6 +160,10 @@ func (p *IntegerParser) Parse(path string, s *Scanner, v interface{}) error {
 		*t = int16(tv)
 	case *uint16:
 		*t = uint16(tv)
+	case *int8:
+		*t = int8(tv)
+	case *uint8:
+		*t = uint8(tv)
 	}
 
 	return nil

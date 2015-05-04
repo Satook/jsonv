@@ -34,6 +34,7 @@ const (
 	tokenArrayBegin
 	tokenArrayEnd
 	tokenItemSep // a single ',' token for arrays and objects
+	tokenPropSep
 	tokenString
 	tokenNumber
 	tokenTrue
@@ -56,6 +57,8 @@ func (t TokenType) String() string {
 		return "]"
 	case tokenItemSep:
 		return ","
+	case tokenPropSep:
+		return ":"
 	case tokenString:
 		return "string"
 	case tokenNumber:
@@ -187,6 +190,8 @@ func (s *Scanner) ReadToken() (TokenType, []byte, error) {
 		tok = tokenArrayEnd
 	case ',':
 		tok = tokenItemSep
+	case ':':
+		tok = tokenPropSep
 	}
 	// return the single char token
 	if tok != tokenError {
