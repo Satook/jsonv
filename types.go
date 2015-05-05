@@ -226,26 +226,26 @@ func (p *ObjectParser) Parse(path string, s *Scanner, v interface{}) error {
 		// get the appropriate prop
 		prop := p.getProp(key[1 : len(key)-1])
 		if prop == nil {
-			// TODO: Need to read/skip a value
-			_, _, err := s.ReadToken() // this handles simple values only for now (no arrays or objects)
+			// skip the value
+			_, _, err := s.ReadToken() // TODO: this handles simple values only for now (no arrays or objects)
 			if err != nil {
 				return err
 			}
-			continue
-		}
-		// walk to the actual value and allocate if needed
-		propval := val
-		for _, i := range prop.f.index {
-			propval = propval.Field(i)
-			if propval.Kind() == reflect.Ptr {
-				if propval.IsNil() {
-					propval.Set(reflect.New(propval.Type().Elem()))
+		} else {
+			// walk to the actual value and allocate if needed
+			propval := val
+			for _, i := range prop.f.index {
+				propval = propval.Field(i)
+				if propval.Kind() == reflect.Ptr {
+					if propval.IsNil() {
+						propval.Set(reflect.New(propval.Type().Elem()))
+					}
+					propval = propval.Elem()
 				}
-				propval = propval.Elem()
 			}
-		}
-		if err := prop.Schema.Parse("/", s, propval.Addr().Interface()); err != nil {
-			return err
+			if err := prop.Schema.Parse("/", s, propval.Addr().Interface()); err != nil {
+				return err
+			}
 		}
 
 		// we want a , or a }

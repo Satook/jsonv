@@ -131,8 +131,7 @@ func (s *Scanner) ReadInteger() (int64, error) {
 	if tok == tokenError {
 		return 0, err
 	} else if tok != tokenNumber {
-		// TODO: return "got type X, expected type Y"
-		return 0, fmt.Errorf(ERROR_INVALID_INT, string(buf))
+		return 0, NewParseError(fmt.Sprintf(ERROR_INVALID_INT, string(buf)))
 	}
 
 	tv, err := strconv.ParseInt(string(buf), 10, 64)
@@ -219,12 +218,13 @@ func (s *Scanner) ReadToken() (TokenType, []byte, error) {
 		l := len(lookFor)
 		if err := s.atLeast(l); err == nil {
 			buf := s.buf[s.roff : s.roff+l]
-			if string(buf) == lookFor {
+			sbuf := string(buf)
+			if sbuf == lookFor {
 				s.roff += l
 				s.rcount += l
 				return tok, buf, nil
 			} else {
-				return tokenError, buf, NewParseError("Expected " + lookFor)
+				return tokenError, buf, NewParseError("Expected " + lookFor + ", not " + sbuf)
 			}
 		}
 	} else if first == '"' {

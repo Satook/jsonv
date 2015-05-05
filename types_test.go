@@ -53,12 +53,15 @@ func Test_SchemaTypeParse(t *testing.T) {
 
 		{String(), `"false"`, "false"},
 		{String(), `"Something with \n \\ "`, "Something with \n \\ "},
+		{String(), `"Unicode!! \u2318"`, "Unicode!! \u2318"},
 
 		// object
+		// with all props
 		{Object(Prop("Captcha", String()), Prop("Fullname", String())),
 			`{"Captcha": "Zing", "Fullname":"Bob" }`, simpleStruct{"Zing", "Bob"}},
-		// with all props
-		// with extra prop
+		// with extra prop (on struct but not requested
+		{Object(Prop("Captcha", String())),
+			`{"Captcha": "Zing", "Fullname":"Bob" }`, simpleStruct{"Zing", ""}},
 	}
 
 	for i, c := range cases {

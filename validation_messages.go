@@ -6,11 +6,12 @@ const (
 	ERROR_BAD_FLOAT_DEST  = "Cannot assign float to target variable of type %v, path %v"
 	ERROR_BAD_STRING_DEST = "Cannot assign string to target variable of type %v, path %v"
 	ERROR_BAD_BOOL_DEST   = "Cannot assign boolean to target variable of type %v, path %v"
+	ERROR_BAD_OBJ_DEST    = "Must be a non-nil ptr to a struct, not %v"
 
-	ERROR_INVALID_INT = "Must be an integer, got value %v"
+	ERROR_INVALID_INT = "Expected an integer, got %v"
 	ERROR_PARSE_INT   = "Error parsing integer, %v"
 
-	ERROR_INVALID_BOOL = "Must be an boolean, got value %v"
+	ERROR_INVALID_BOOL = "Expected a boolean, got %v"
 	ERROR_PARSE_BOOL   = "Error parsing bool, %v"
 
 	ERROR_MIN_LEN_STR   = "Must be at least %d characters long"
@@ -19,8 +20,6 @@ const (
 
 	ERROR_MIN_LEN_ARR = "Must contain at least %d items"
 	ERROR_MAX_LEN_ARR = "Must contain no more than %d items"
-
-	ERROR_BAD_OBJ_DEST = "Must be a non-nil ptr to a struct, not %v"
 
 	// general number validation errros
 	ERROR_MAX_EX = "Must be less than %v"
