@@ -1,4 +1,4 @@
-package jsonschema
+package jsonv
 
 import (
 	"bytes"
@@ -6,31 +6,32 @@ import (
 	"testing"
 )
 
-type trainer struct {
-	Captcha      string
-	Fullname     string
-	Email        string
-	Mobile       string
-	Password     string
-	PasswordHash []byte `json:"-"`
+type simpleStruct struct {
+	Captcha  string
+	Fullname string
 }
 
 func Test_ParseSimpleSuccess(t *testing.T) {
-	var testInt int64
-
 	cases := []struct {
-		baseType interface{}
-		schema   SchemaType
-		json     string
-		want     interface{}
+		schema SchemaType
+		json   string
+		want   interface{}
 	}{
-		{&testInt, Integer(), "123", int64(123)},
+		{Integer(), "123", int64(123)},
+		{Boolean(), "true", true},
+		/*		{
+				Object(
+					Prop("Captcha", String()),
+					Prop("Fullname", String()),
+				),
+				`{"Captcha": "Zing", "Fullname":"Bob" }`,
+				simpleStruct{"Zing", "Bob"},
+			},*/
 	}
 
 	for i, c := range cases {
-		parser := Parser(c.baseType, c.schema)
-		destPtr := reflect.New(reflect.Indirect(reflect.ValueOf(c.baseType)).Type())
-		destVal := destPtr.Elem()
+		destPtr := reflect.New(reflect.TypeOf(c.want)) // allocate a fresh object, same type as c.want
+		parser := Parser(destPtr.Interface(), c.schema)
 
 		t.Logf("Running parser")
 		if err := parser.Parse(bytes.NewBufferString(c.json), destPtr.Interface()); err != nil {
@@ -38,8 +39,9 @@ func Test_ParseSimpleSuccess(t *testing.T) {
 			continue
 		}
 
-		if !reflect.DeepEqual(destVal.Interface(), c.want) {
-			t.Errorf("Got %v, want %v", destVal.Interface(), c.want)
+		dest := destPtr.Elem().Interface()
+		if !reflect.DeepEqual(dest, c.want) {
+			t.Errorf("Got %v, want %v", dest, c.want)
 		}
 	}
 }

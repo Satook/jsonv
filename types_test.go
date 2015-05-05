@@ -1,4 +1,4 @@
-package jsonschema
+package jsonv
 
 import (
 	"bytes"
@@ -50,10 +50,27 @@ func Test_SchemaTypeParse(t *testing.T) {
 
 		{Boolean(), "true", true},
 		{Boolean(), "false", false},
+
+		{String(), `"false"`, "false"},
+		{String(), `"Something with \n \\ "`, "Something with \n \\ "},
+
+		// object
+		{Object(Prop("Captcha", String()), Prop("Fullname", String())),
+			`{"Captcha": "Zing", "Fullname":"Bob" }`, simpleStruct{"Zing", "Bob"}},
+		// with all props
+		// with extra prop
 	}
 
 	for i, c := range cases {
-		dest := reflect.New(reflect.TypeOf(c.want)).Interface()
+		destType := reflect.TypeOf(c.want)
+		if ps, ok := c.t.(PrecacheSchemaType); ok {
+			if err := ps.Prepare(destType); err != nil {
+				t.Error(err)
+				continue
+			}
+		}
+
+		dest := reflect.New(destType).Interface()
 		if err := tryParse(c.t, c.json, dest, c.want); err != nil {
 			t.Errorf("Case %d %v", i, err)
 		}

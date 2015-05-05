@@ -1,4 +1,4 @@
-package jsonschema
+package jsonv
 
 import (
 	"fmt"
@@ -48,9 +48,13 @@ be a pointer to or direct instance of the type, e.g. both Parser(&T{}) &
 Parser(T{}) should work for most types.
 */
 func Parser(t interface{}, s SchemaType) *ValidatingParser {
-	// TODO: Check target type is valid, can take all fields, field types and
-	// validators are all line up, etc
-	return &ValidatingParser{reflect.Indirect(reflect.ValueOf(t)).Type(), s}
+	targetType := reflect.Indirect(reflect.ValueOf(t)).Type()
+	if ps, ok := s.(PrecacheSchemaType); ok {
+		if err := ps.Prepare(targetType); err != nil {
+			panic(err)
+		}
+	}
+	return &ValidatingParser{targetType, s}
 }
 
 /*
@@ -72,8 +76,10 @@ func (p *ValidatingParser) Parse(r io.Reader, v interface{}) []InvalidData {
 	if err := p.schema.Parse("/", s, v); err != nil {
 		if verr, ok := err.(ValidationError); ok {
 			return verr
+		} else if perr, ok := err.(*ParseError); ok {
+			return NewSingleVErr("/", perr.Error())
 		} else {
-			return NewSingleVErr("/", err.Error())
+			panic(err)
 		}
 	}
 

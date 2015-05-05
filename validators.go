@@ -12,7 +12,7 @@ validators logic for a given type.
 
 Note: Number validators are strongly type to either Integer or Float types.
 */
-package jsonschema
+package jsonv
 
 import (
 	"fmt"

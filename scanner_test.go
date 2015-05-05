@@ -1,4 +1,4 @@
-package jsonschema
+package jsonv
 
 import (
 	"bytes"
@@ -61,3 +61,10 @@ func Test_scannerTokens(t *testing.T) {
 		}
 	}
 }
+
+// TODO: test skipValue
+// Used by Object when it needs to jump an unneeded property
+//
+// Test
+//	skip null, string, number, bool, array, object {}, object {props}, object {{},{},{}}
+//

@@ -1,4 +1,4 @@
-package jsonschema
+package jsonv
 
 import (
 	"fmt"
@@ -329,7 +329,6 @@ func (s *Scanner) bytesUntilPred(offset int, p bytePred) (int, error) {
 
 		// scan through current read buff
 		for _, c := range s.buf[s.roff+offset:] {
-			fmt.Printf("Checking char %c\n", c)
 			if p(c) {
 				return offset, nil
 			} else {
