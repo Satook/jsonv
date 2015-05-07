@@ -230,9 +230,7 @@ func (p *ObjectParser) Parse(path string, s *Scanner, v interface{}) error {
 		// get the appropriate prop
 		prop := p.getProp(key[1 : len(key)-1])
 		if prop == nil {
-			// skip the value
-			_, _, err := s.ReadToken() // TODO: this handles simple values only for now (no arrays or objects)
-			if err != nil {
+			if err := s.SkipValue(); err != nil {
 				return err
 			}
 		} else {

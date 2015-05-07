@@ -45,3 +45,7 @@ func Test_ParseSimpleSuccess(t *testing.T) {
 		}
 	}
 }
+
+// TODO: add in bad types tests
+// Want to make sure all the different parsers are capable of checking the types
+// at construction time, not only at parsing time.

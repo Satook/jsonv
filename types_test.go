@@ -62,6 +62,9 @@ func Test_SchemaTypeParse(t *testing.T) {
 		// with extra prop (on struct but not requested
 		{Object(Prop("Captcha", String())),
 			`{"Captcha": "Zing", "Fullname":"Bob" }`, simpleStruct{"Zing", ""}},
+		// with extra complex prop that was not requested
+		{Object(Prop("Captcha", String())),
+			`{"Captcha": "Zing", "Fullname":{"favs": [1,2,3], "zing": "zong"} }`, simpleStruct{"Zing", ""}},
 
 		{Slice(Object(Prop("Captcha", String()))),
 			`[{"Captcha": "Zings", "Fullname":"Bobs" }]`, []simpleStruct{{"Zings", ""}}},
