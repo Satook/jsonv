@@ -46,6 +46,50 @@ func Test_ParseSimpleSuccess(t *testing.T) {
 	}
 }
 
-// TODO: add in bad types tests
+// Bad types tests
 // Want to make sure all the different parsers are capable of checking the types
 // at construction time, not only at parsing time.
+
+func Test_parserBadTypes(t *testing.T) {
+	type dumbStruct struct {
+		Silly string
+	}
+	type intName struct {
+		Name int64
+	}
+
+	cases := []struct {
+		s SchemaType
+		t interface{}
+	}{
+		// straight type checks
+		{Integer(), new(int8)},
+		{Integer(), new(float64)},
+		{Boolean(), new(float64)},
+		{String(), new(float64)},
+		{Object(), new(float64)},
+		{Slice(Object()), new(float64)},
+
+		// nested type checks
+		// dest type have all the props
+		{Object(
+			Prop("Name", String()),
+		), new(dumbStruct)},
+		{Object(
+			Prop("Name", String()),
+			Prop("Silly", String()),
+		), new(dumbStruct)},
+		// dest type props must have a type that each prop parser can map to
+		{Object(Prop("Name", String())), new(intName)},
+
+		// slices too!
+		{Slice(Object(Prop("Name", String()))), make([]dumbStruct, 0, 10)},
+		{Slice(Object(Prop("Name", String()))), make([]intName, 0, 10)},
+	}
+
+	for i, c := range cases {
+		if _, err := ParserError(c.t, c.s); err == nil {
+			t.Errorf("Case %d: Expected error, got nil", i)
+		}
+	}
+}

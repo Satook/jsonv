@@ -48,13 +48,24 @@ be a pointer to or direct instance of the type, e.g. both Parser(&T{}) &
 Parser(T{}) should work for most types.
 */
 func Parser(t interface{}, s SchemaType) *ValidatingParser {
+	if p, err := ParserError(t, s); err != nil {
+		panic(err)
+	} else {
+		return p
+	}
+}
+
+/*
+Same as Parser, but returns an error instead of panicing
+*/
+func ParserError(t interface{}, s SchemaType) (*ValidatingParser, error) {
 	targetType := reflect.Indirect(reflect.ValueOf(t)).Type()
-	if ps, ok := s.(PrecacheSchemaType); ok {
+	if ps, ok := s.(PreparedSchemaType); ok {
 		if err := ps.Prepare(targetType); err != nil {
-			panic(err)
+			return nil, err
 		}
 	}
-	return &ValidatingParser{targetType, s}
+	return &ValidatingParser{targetType, s}, nil
 }
 
 /*

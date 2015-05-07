@@ -30,7 +30,7 @@ types to allow them to initialise once the type is known. E.g. Object types
 use this to pre-cache all the fields they need and call it on each of their
 ObjectProp.Types
 */
-type PrecacheSchemaType interface {
+type PreparedSchemaType interface {
 	Prepare(reflect.Type) error
 }
 
@@ -141,7 +141,7 @@ func (p *ObjectParser) Prepare(t reflect.Type) error {
 		// save info and Prepare the Schema if needed
 		if prop != nil {
 			prop.f = *f
-			if ps, ok := prop.Schema.(PrecacheSchemaType); ok {
+			if ps, ok := prop.Schema.(PreparedSchemaType); ok {
 				if err := ps.Prepare(f.typ); err != nil {
 					return err
 				}
@@ -292,7 +292,7 @@ func (p *SliceParser) Prepare(t reflect.Type) error {
 	p.elemType = t.Elem()
 
 	// prepare our sub-type if we need to
-	if ps, ok := p.schema.(PrecacheSchemaType); ok {
+	if ps, ok := p.schema.(PreparedSchemaType); ok {
 		return ps.Prepare(p.elemType)
 	}
 
@@ -382,22 +382,27 @@ func String(vs ...StringValidator) *StringParser {
 	return &StringParser{vs}
 }
 
+func (p *StringParser) Prepare(t reflect.Type) error {
+	if t.Kind() != reflect.String {
+		return fmt.Errorf("Want string not %v", t)
+	}
+
+	return nil
+}
+
 func (p StringParser) Parse(path string, s *Scanner, v interface{}) error {
 	tok, buf, err := s.ReadToken()
 	if tok == tokenError {
 		return err
 	}
 
-	// now assign the value with whatever precision we can
-	switch t := v.(type) {
-	default:
+	if ss, ok := v.(*string); !ok {
 		return fmt.Errorf(ERROR_BAD_STRING_DEST, reflect.TypeOf(v), path)
-	case *string:
+	} else {
 		// TODO: Actually parse the thing, this is a fairly sub-optimal method
-		json.Unmarshal(buf, t)
+		json.Unmarshal(buf, ss)
+		return nil
 	}
-
-	return nil
 }
 
 type BooleanParser struct {
@@ -405,6 +410,14 @@ type BooleanParser struct {
 
 func Boolean() *BooleanParser {
 	return &BooleanParser{}
+}
+
+func (p *BooleanParser) Prepare(t reflect.Type) error {
+	if t.Kind() != reflect.Bool {
+		return fmt.Errorf("Want bool not %v", t)
+	}
+
+	return nil
 }
 
 func (p *BooleanParser) Parse(path string, s *Scanner, v interface{}) error {
@@ -439,6 +452,14 @@ type IntegerParser struct {
 
 func Integer(vs ...IntegerValidator) *IntegerParser {
 	return &IntegerParser{vs}
+}
+
+func (p *IntegerParser) Prepare(t reflect.Type) error {
+	if t.Kind() != reflect.Int64 {
+		return fmt.Errorf("Want int64 not %v", t)
+	}
+
+	return nil
 }
 
 func (p *IntegerParser) Parse(path string, s *Scanner, v interface{}) error {

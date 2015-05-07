@@ -74,7 +74,7 @@ func Test_SchemaTypeParse(t *testing.T) {
 
 	for i, c := range cases {
 		destType := reflect.TypeOf(c.want)
-		if ps, ok := c.t.(PrecacheSchemaType); ok {
+		if ps, ok := c.t.(PreparedSchemaType); ok {
 			if err := ps.Prepare(destType); err != nil {
 				t.Error(err)
 				continue
