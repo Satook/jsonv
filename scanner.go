@@ -142,7 +142,7 @@ func (s *Scanner) _skipValue(tok TokenType) error {
 
 func (s *Scanner) skipObject() error {
 	for {
-		// are we done?
+		// read the key, or '}'
 		if tok, _, err := s.ReadToken(); err != nil {
 			return err
 		} else if tok == tokenObjectEnd {
@@ -232,12 +232,52 @@ func (s *Scanner) ReadInteger() (int64, error) {
 	return tv, nil
 }
 
-func (s *Scanner) ReadBool() (bool, error) {
-	return true, nil
-}
+/*
+Reads forward to the next token, but only returns its type, leaves the read
+cursor pointed at its first byte, unlike ReadToken which leaves the read cursor
+just past its last.
+*/
+func (s *Scanner) PeekToken() (TokenType, error) {
+	var n int
+	n, s.rerr = s.bytesUntilPred(0, notSpace)
+	s.roff += n
+	s.rcount += n
 
-func (s *Scanner) ReadString() (string, error) {
-	return "", nil
+	// have we run out of data?
+	if s.roff >= len(s.buf) {
+		return tokenError, s.rerr
+	}
+
+	// we only need the first character
+	tok := tokenError
+	switch s.buf[s.roff] {
+	case '{':
+		tok = tokenObjectBegin
+	case '}':
+		tok = tokenObjectEnd
+	case '[':
+		tok = tokenArrayBegin
+	case ']':
+		tok = tokenArrayEnd
+	case ',':
+		tok = tokenItemSep
+	case ':':
+		tok = tokenPropSep
+	case 't':
+		tok = tokenTrue
+	case 'f':
+		tok = tokenFalse
+	case 'n':
+		tok = tokenNull
+	case '"':
+		tok = tokenString
+	case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
+		tok = tokenNumber
+	default:
+		return tokenError, NewParseError("Invaid JSON")
+	}
+
+	return tok, nil
 }
 
 /*
@@ -246,12 +286,12 @@ Reads in one JSON token.
 The underlying buffer for the returned byte slice is owned by this scanner.
 Upon subsequent Read* calls, it may be overwritten or de-allocated.
 
-On error, the returned byte slice will be the entire remaining read buffer.
+On error, the returned TokenType will be tokenError and the  byte slice refer to
+the entire remaining read buffer.
 
-There are 2 types of error:
+The returned error can be of 2 different types:
  1. General: An IO error was encountered, EOF, socket dropped, etc.
- 2. ParseError: We have the bytes, but they were malformed, parsing cannot
- continue.
+ 2. ParseError: We have the data, but it was malformed, parsing cannot continue.
 */
 func (s *Scanner) ReadToken() (TokenType, []byte, error) {
 	// move to first non-space char (s.buf[s.roff] != space)

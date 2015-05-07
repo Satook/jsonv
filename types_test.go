@@ -62,6 +62,11 @@ func Test_SchemaTypeParse(t *testing.T) {
 		// with extra prop (on struct but not requested
 		{Object(Prop("Captcha", String())),
 			`{"Captcha": "Zing", "Fullname":"Bob" }`, simpleStruct{"Zing", ""}},
+
+		{Slice(Object(Prop("Captcha", String()))),
+			`[{"Captcha": "Zings", "Fullname":"Bobs" }]`, []simpleStruct{{"Zings", ""}}},
+		{Slice(Integer()),
+			`[1,2,3,45, -12]`, []int64{1, 2, 3, 45, -12}},
 	}
 
 	for i, c := range cases {
@@ -73,9 +78,14 @@ func Test_SchemaTypeParse(t *testing.T) {
 			}
 		}
 
-		dest := reflect.New(destType).Interface()
-		if err := tryParse(c.t, c.json, dest, c.want); err != nil {
+		destPtr := reflect.New(destType)
+		if err := tryParse(c.t, c.json, destPtr.Interface(), c.want); err != nil {
 			t.Errorf("Case %d %v", i, err)
+		}
+
+		got := destPtr.Elem().Interface()
+		if !reflect.DeepEqual(got, c.want) {
+			t.Errorf("Case %d: Got %+v, want %+v", i, got, c.want)
 		}
 	}
 }

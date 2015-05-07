@@ -203,24 +203,28 @@ func (p *ObjectParser) Parse(path string, s *Scanner, v interface{}) error {
 	if tok == tokenError {
 		return err
 	} else if tok != tokenObjectBegin {
-		return NewParseError("'{' expected, not " + tok.String())
+		return NewParseError("Expected '{' not " + tok.String())
 	}
 
-	// read the first key, or '}'
-	tok, key, err := s.ReadToken()
-	for tok != tokenObjectEnd {
-		if tok == tokenError {
+	for {
+		var key []byte
+
+		// read the key, or '}'
+		if tok, keyb, err := s.ReadToken(); tok == tokenError {
 			return err
+		} else if tok == tokenObjectEnd {
+			break
 		} else if tok != tokenString {
-			return NewParseError("Object property name or '}' expected, not " + tok.String())
+			return NewParseError("Expected object property name or '}' not " + tok.String())
+		} else {
+			key = keyb
 		}
 
 		// read the ':'
-		tok, _, err = s.ReadToken()
-		if tok == tokenError {
+		if tok, _, err = s.ReadToken(); tok == tokenError {
 			return err
 		} else if tok != tokenPropSep {
-			return NewParseError("':' expected, not " + tok.String())
+			return NewParseError("Expected ':' not " + tok.String())
 		}
 
 		// get the appropriate prop
@@ -243,26 +247,127 @@ func (p *ObjectParser) Parse(path string, s *Scanner, v interface{}) error {
 					propval = propval.Elem()
 				}
 			}
+
+			// parse the value
 			if err := prop.Schema.Parse("/", s, propval.Addr().Interface()); err != nil {
 				return err
 			}
 		}
 
 		// we want a , or a }
-		tok, _, err = s.ReadToken()
-		if tok == tokenError {
+		if tok, _, err := s.ReadToken(); tok == tokenError {
 			return err
 		} else if tok == tokenObjectEnd {
 			break
 		} else if tok == tokenItemSep {
-			// Note this + the loop conditional allows a trailing ',' before the '}'
-			tok, key, err = s.ReadToken()
+			// Note this a trailing ',' before the '}'
+			continue
 		} else {
-			return NewParseError("Object , or } expected, not " + tok.String())
+			return NewParseError("Expected ',' or '}' not " + tok.String())
 		}
 	}
 
 	// TODO: check for mandatory fields
+
+	return nil
+}
+
+/*
+Parses a JSON value into an array whos values are a single type.
+*/
+type SliceParser struct {
+	elemType reflect.Type
+	schema   SchemaType
+	vs       []SliceValidator
+}
+
+func Slice(s SchemaType, vs ...SliceValidator) *SliceParser {
+	return &SliceParser{schema: s, vs: vs}
+}
+
+func (p *SliceParser) Prepare(t reflect.Type) error {
+	// make sure it's a struct
+	if t.Kind() != reflect.Slice {
+		return fmt.Errorf(ERROR_BAD_SLICE_DEST, t)
+	}
+
+	p.elemType = t.Elem()
+
+	// prepare our sub-type if we need to
+	if ps, ok := p.schema.(PrecacheSchemaType); ok {
+		return ps.Prepare(p.elemType)
+	}
+
+	return nil
+}
+
+func (p *SliceParser) Parse(path string, s *Scanner, v interface{}) error {
+	// check we have a ptr to a struct
+	ptrVal := reflect.ValueOf(v)
+	ptrType := ptrVal.Type()
+	if ptrType.Kind() != reflect.Ptr || ptrVal.IsNil() {
+		return fmt.Errorf(ERROR_BAD_SLICE_DEST, ptrVal.Type())
+	}
+	val := ptrVal.Elem()
+	valType := val.Type()
+	if valType.Kind() != reflect.Slice {
+		return fmt.Errorf(ERROR_BAD_SLICE_DEST, ptrVal.Type())
+	}
+
+	// read the '['
+	tok, _, err := s.ReadToken()
+	if tok == tokenError {
+		return err
+	} else if tok != tokenArrayBegin {
+		return NewParseError("Expected '[' not " + tok.String())
+	}
+
+	// see if we have at least 1 value
+	if tok, err := s.PeekToken(); err != nil {
+		return err
+	} else if tok == tokenArrayEnd {
+		// actually consume it
+		s.ReadToken()
+		return nil
+	}
+
+	// now read val then ','|']'
+	i := 0
+	for {
+		// next up must be a value
+		// Grow the slice if necessary
+		if i >= val.Cap() {
+			newcap := val.Cap() + val.Cap()/2
+			if newcap < 4 {
+				newcap = 4
+			}
+			newv := reflect.MakeSlice(val.Type(), val.Len(), newcap)
+			reflect.Copy(newv, val)
+			val.Set(newv)
+		}
+		if i >= val.Len() {
+			val.SetLen(i + 1)
+		}
+
+		// read in the value
+		itemPtr := val.Index(i).Addr().Interface()
+		if err := p.schema.Parse(path+"/"+string(i)+"/", s, itemPtr); err != nil {
+			return err
+		}
+
+		i++
+
+		// we want either a ',' or a ']'
+		if tok, _, err := s.ReadToken(); tok == tokenError {
+			return err
+		} else if tok == tokenArrayEnd {
+			break
+		} else if tok == tokenItemSep {
+			continue
+		} else {
+			return NewParseError("Expected ',' or '[' not " + tok.String())
+		}
+	}
 
 	return nil
 }
