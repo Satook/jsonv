@@ -19,14 +19,14 @@ func Test_ParseSimpleSuccess(t *testing.T) {
 	}{
 		{Integer(), "123", int64(123)},
 		{Boolean(), "true", true},
-		/*		{
-				Object(
-					Prop("Captcha", String()),
-					Prop("Fullname", String()),
-				),
-				`{"Captcha": "Zing", "Fullname":"Bob" }`,
-				simpleStruct{"Zing", "Bob"},
-			},*/
+		{
+			Object(
+				Prop("Captcha", String()),
+				Prop("Fullname", String()),
+			),
+			`{"Captcha": "Zing", "Fullname":"Bob" }`,
+			simpleStruct{"Zing", "Bob"},
+		},
 	}
 
 	for i, c := range cases {

@@ -114,6 +114,96 @@ func NewScanner(r io.Reader) *Scanner {
 }
 
 /*
+Skips over a single value in the input.
+*/
+func (s *Scanner) SkipValue() error {
+	// read the first token
+	tok, _, err := s.ReadToken()
+	if tok == tokenError {
+		return err
+	}
+
+	return s._skipValue(tok)
+}
+
+func (s *Scanner) _skipValue(tok TokenType) error {
+	switch tok {
+	default:
+		return NewParseError("Expected JSON value, e.g. string, bool, etc.")
+	case tokenObjectBegin:
+		return s.skipObject()
+	case tokenArrayBegin:
+		return s.skipArray()
+	case tokenString, tokenNumber, tokenTrue, tokenFalse, tokenNull:
+		// aaaaand we're done
+		return nil
+	}
+}
+
+func (s *Scanner) skipObject() error {
+	for {
+		// are we done?
+		if tok, _, err := s.ReadToken(); err != nil {
+			return err
+		} else if tok == tokenObjectEnd {
+			break
+		} else if tok != tokenString {
+			return NewParseError("Expected string or '}', not " + tok.String())
+		}
+
+		// now read the ':'
+		if tok, _, err := s.ReadToken(); err != nil {
+			return err
+		} else if tok != tokenPropSep {
+			return NewParseError("Expected ':' not " + tok.String())
+		}
+
+		// now skip an entire value
+		if err := s.SkipValue(); err != nil {
+			return err
+		}
+
+		if tok, _, err := s.ReadToken(); err != nil {
+			return err
+		} else if tok == tokenItemSep {
+			continue
+		} else if tok == tokenObjectEnd {
+			break
+		} else {
+			return NewParseError("Expected ',' or '}', not " + tok.String())
+		}
+	}
+
+	return nil
+}
+
+func (s *Scanner) skipArray() error {
+	for {
+		if tok, _, err := s.ReadToken(); err != nil {
+			return err
+		} else if tok == tokenArrayEnd {
+			break
+		} else if err := s._skipValue(tok); err != nil {
+			return err
+		}
+
+		// we want a , or a ']'
+		tok, _, err := s.ReadToken()
+		if err != nil {
+			return err
+		} else if tok == tokenItemSep {
+			continue
+		} else if tok == tokenArrayEnd {
+			break
+		} else {
+			return NewParseError("Expected ',' or ']', not " + tok.String())
+		}
+	}
+
+	return nil
+}
+
+/*
 Reads a single null value from the stream. Returns an error if the next token is
 not null
 */
@@ -274,7 +364,7 @@ func (s *Scanner) ReadToken() (TokenType, []byte, error) {
 			// push it through the machine
 			state, perr = state(s.buf[s.roff+offset])
 			if perr != nil {
-				// parse error
+				// TODO: make it a parse error
 				return tokenError, s.buf[s.roff:], s.rerr
 			} else if state == nil {
 				// finished
@@ -288,10 +378,10 @@ func (s *Scanner) ReadToken() (TokenType, []byte, error) {
 			state, _ = state(0x20)
 		}
 		if state == nil {
-			buf := s.buf[s.roff : s.roff+offset+1]
+			buf := s.buf[s.roff : s.roff+offset]
 			s.roff += len(buf)
 			s.rcount += len(buf)
-			return tokenNumber, s.buf, nil
+			return tokenNumber, buf, nil
 		}
 	}
 
