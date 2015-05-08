@@ -6,24 +6,24 @@ import (
 )
 
 type SliceValidator interface {
-	ValidateSlice(i interface{}) error
+	ValidateSlice(reflect.Value) error
 }
 
-type SliceValidatorFunc func(i interface{}) error
+type SliceValidatorFunc func(reflect.Value) error
 
-func (f SliceValidatorFunc) ValidateSlice(i interface{}) error {
-	return f(i)
+func (f SliceValidatorFunc) ValidateSlice(v reflect.Value) error {
+	return f(v)
 }
 
-func (m *MinLenV) ValidateSlice(i interface{}) error {
-	if reflect.ValueOf(i).Len() < m.l {
+func (m *MinLenV) ValidateSlice(v reflect.Value) error {
+	if v.Len() < m.l {
 		return fmt.Errorf(ERROR_MIN_LEN_ARR, m.l)
 	}
 	return nil
 }
 
-func (m *MaxLenV) ValidateSlice(i interface{}) error {
-	if reflect.ValueOf(i).Len() > m.l {
+func (m *MaxLenV) ValidateSlice(v reflect.Value) error {
+	if v.Len() > m.l {
 		return fmt.Errorf(ERROR_MAX_LEN_ARR, m.l)
 	}
 	return nil

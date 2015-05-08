@@ -1,9 +1,7 @@
 package jsonv
 
 import (
-	"fmt"
 	"io"
-	"strconv"
 	"unicode"
 )
 
@@ -204,35 +202,6 @@ func (s *Scanner) skipArray() error {
 }
 
 /*
-Reads a single null value from the stream. Returns an error if the next token is
-not null
-*/
-/*
-func (s *Scanner) ReadNull() error {
-}
-*/
-/*
-Reads a single number value. Returning it's characters. Returns an error if the
-next token is not a valid or is not a number.
-*/
-
-func (s *Scanner) ReadInteger() (int64, error) {
-	tok, buf, err := s.ReadToken()
-	if tok == tokenError {
-		return 0, err
-	} else if tok != tokenNumber {
-		return 0, NewParseError(fmt.Sprintf(ERROR_INVALID_INT, string(buf)))
-	}
-
-	tv, err := strconv.ParseInt(string(buf), 10, 64)
-	if err != nil {
-		return 0, err
-	}
-
-	return tv, nil
-}
-
-/*
 Reads forward to the next token, but only returns its type, leaves the read
 cursor pointed at its first byte, unlike ReadToken which leaves the read cursor
 just past its last.
@@ -404,8 +373,7 @@ func (s *Scanner) ReadToken() (TokenType, []byte, error) {
 			// push it through the machine
 			state, perr = state(s.buf[s.roff+offset])
 			if perr != nil {
-				// TODO: make it a parse error
-				return tokenError, s.buf[s.roff:], s.rerr
+				return tokenError, s.buf[s.roff:], perr
 			} else if state == nil {
 				// finished
 				break
@@ -423,6 +391,8 @@ func (s *Scanner) ReadToken() (TokenType, []byte, error) {
 			s.rcount += len(buf)
 			return tokenNumber, buf, nil
 		}
+	} else {
+		return tokenError, s.buf[s.roff:], NewParseError("Expected valid JSON")
 	}
 
 	if s.rerr != nil {

@@ -24,11 +24,44 @@ type ValidationError []InvalidData
 
 func (v ValidationError) Error() string {
 	// some handy way to write it out
-	return "Not yet implemented"
+	return fmt.Sprint([]InvalidData(v))
 }
 
-func NewVErr(es []InvalidData) ValidationError {
-	return ValidationError(es)
+func (v ValidationError) Len() int {
+	return len([]InvalidData(v))
+}
+
+func (v ValidationError) Add(path, message string) ValidationError {
+	if len(v)+1 > cap(v) {
+		newCap := cap(v) + cap(v)/2
+		if newCap < 4 {
+			newCap = 4
+		}
+		newv := make([]InvalidData, len(v), newCap)
+		copy(newv, v)
+		v = newv
+	}
+	// capacity is there, so just resize
+	v = v[:len(v)+1]
+	v[len(v)-1] = InvalidData{path, message}
+
+	return v
+}
+
+func (v ValidationError) AddMany(o ValidationError) ValidationError {
+	off := len(v)
+	if off+len(o) > cap(v) {
+		newCap := cap(v) + len(o) + cap(v)/2
+		if newCap < 4 {
+			newCap = 4
+		}
+		newv := make([]InvalidData, off, newCap)
+		copy(newv, v)
+		v = newv
+	}
+	v = v[:off+len(o)]
+	copy(v[off:], o)
+	return v
 }
 
 func NewSingleVErr(path, msg string) ValidationError {

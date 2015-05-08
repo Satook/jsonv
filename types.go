@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strconv"
 )
 
 /*
@@ -206,6 +207,9 @@ func (p *ObjectParser) Parse(path string, s *Scanner, v interface{}) error {
 		return NewParseError("Expected '{' not " + tok.String())
 	}
 
+	// we'll accumulate validation errors into this
+
+	var errs ValidationError
 	for {
 		var key []byte
 
@@ -248,7 +252,11 @@ func (p *ObjectParser) Parse(path string, s *Scanner, v interface{}) error {
 
 			// parse the value
 			if err := prop.Schema.Parse("/", s, propval.Addr().Interface()); err != nil {
-				return err
+				if verr, ok := err.(ValidationError); ok {
+					errs = errs.AddMany(verr)
+				} else {
+					return err
+				}
 			}
 		}
 
@@ -267,7 +275,11 @@ func (p *ObjectParser) Parse(path string, s *Scanner, v interface{}) error {
 
 	// TODO: check for mandatory fields
 
-	return nil
+	if len(errs) > 0 {
+		return errs
+	} else {
+		return nil
+	}
 }
 
 /*
@@ -320,18 +332,23 @@ func (p *SliceParser) Parse(path string, s *Scanner, v interface{}) error {
 		return NewParseError("Expected '[' not " + tok.String())
 	}
 
+	finished := false
+
 	// see if we have at least 1 value
 	if tok, err := s.PeekToken(); err != nil {
 		return err
 	} else if tok == tokenArrayEnd {
 		// actually consume it
 		s.ReadToken()
-		return nil
+		finished = true
 	}
+
+	// this is where we'll store all the validation errors
+	var errs ValidationError
 
 	// now read val then ','|']'
 	i := 0
-	for {
+	for !finished {
 		// next up must be a value
 		// Grow the slice if necessary
 		if i >= val.Cap() {
@@ -349,8 +366,13 @@ func (p *SliceParser) Parse(path string, s *Scanner, v interface{}) error {
 
 		// read in the value
 		itemPtr := val.Index(i).Addr().Interface()
-		if err := p.schema.Parse(path+"/"+string(i)+"/", s, itemPtr); err != nil {
-			return err
+		itemPath := fmt.Sprintf("%s%d/", path, i)
+		if err := p.schema.Parse(itemPath, s, itemPtr); err != nil {
+			if verr, ok := err.(ValidationError); ok {
+				errs = errs.AddMany(verr)
+			} else {
+				return err
+			}
 		}
 
 		i++
@@ -359,7 +381,7 @@ func (p *SliceParser) Parse(path string, s *Scanner, v interface{}) error {
 		if tok, _, err := s.ReadToken(); tok == tokenError {
 			return err
 		} else if tok == tokenArrayEnd {
-			break
+			finished = true
 		} else if tok == tokenItemSep {
 			continue
 		} else {
@@ -367,7 +389,17 @@ func (p *SliceParser) Parse(path string, s *Scanner, v interface{}) error {
 		}
 	}
 
-	return nil
+	// validate the contents
+	for _, v := range p.vs {
+		if err := v.ValidateSlice(val); err != nil {
+			errs = errs.Add(path, err.Error())
+		}
+	}
+	if len(errs) > 0 {
+		return errs
+	} else {
+		return nil
+	}
 }
 
 /*
@@ -401,8 +433,11 @@ func (p StringParser) Parse(path string, s *Scanner, v interface{}) error {
 	} else {
 		// TODO: Actually parse the thing, this is a fairly sub-optimal method
 		json.Unmarshal(buf, ss)
-		return nil
 	}
+
+	// TODO: Validate the strings contents
+
+	return nil
 }
 
 type BooleanParser struct {
@@ -463,22 +498,28 @@ func (p *IntegerParser) Prepare(t reflect.Type) error {
 }
 
 func (p *IntegerParser) Parse(path string, s *Scanner, v interface{}) error {
-	tv, err := s.ReadInteger()
-	if err != nil {
+	tok, buf, err := s.ReadToken()
+	if tok == tokenError {
 		return err
+	} else if tok != tokenNumber {
+		return NewParseError(fmt.Sprintf(ERROR_INVALID_INT, string(buf)))
+	}
+
+	var errs ValidationError
+
+	tv, err := strconv.ParseInt(string(buf), 10, 64)
+	if err != nil {
+		errs = errs.Add(path, err.Error())
+		return errs
 	}
 
 	// check the value
-	var errs ValidationError
 	for _, v := range p.vs {
 		if err := v.ValidateInteger(tv); err != nil {
-			if errs == nil {
-				errs = make(ValidationError, 0, 5)
-			}
-			errs = append(errs, InvalidData{path, err.Error()})
+			errs = errs.Add(path, err.Error())
 		}
 	}
-	if errs != nil {
+	if len(errs) > 0 {
 		return errs
 	}
 
