@@ -38,17 +38,17 @@ type PreparedSchemaType interface {
 /*
 Holds the name and parser/validator for a single JSON object property
 
-Note: Whether or not the value is required determined as follows:
- - If a DefaultValue
+Note: Whether or not the value any non-slice, non-ptr field is required
 */
 type ObjectProp struct {
-	Name   string
-	Schema SchemaType
-	f      field
+	Name     string
+	Schema   SchemaType
+	f        field
+	required bool
 }
 
 func Prop(n string, s SchemaType) ObjectProp {
-	return ObjectProp{n, s, field{nameBytes: []byte(n)}}
+	return ObjectProp{n, s, field{nameBytes: []byte(n)}, false}
 }
 
 /*
@@ -142,6 +142,11 @@ func (p *ObjectParser) Prepare(t reflect.Type) error {
 		// save info and Prepare the Schema if needed
 		if prop != nil {
 			prop.f = *f
+
+			// determine if it's a required field (field.typ) is always the
+			// concrete type
+			ft := t.FieldByIndex(f.index)
+			prop.required = ft.Type.Kind() != reflect.Ptr
 			if ps, ok := prop.Schema.(PreparedSchemaType); ok {
 				if err := ps.Prepare(f.typ); err != nil {
 					return err
@@ -165,22 +170,25 @@ func (p *ObjectParser) Prepare(t reflect.Type) error {
 	return nil
 }
 
-func (p *ObjectParser) getProp(name []byte) *ObjectProp {
+func (p *ObjectParser) getProp(name []byte) (int, *ObjectProp) {
 	// get the property
 	var prop *ObjectProp
+	var propi int
 	for i := range p.props {
 		pr := &p.props[i]
 
 		if bytes.Equal(pr.f.nameBytes, name) {
 			prop = pr
+			propi = i
 			break
 		}
 		if prop == nil && pr.f.equalFold(pr.f.nameBytes, name) {
 			prop = pr
+			propi = i
 		}
 	}
 
-	return prop
+	return propi, prop
 }
 
 /*
@@ -208,8 +216,10 @@ func (p *ObjectParser) Parse(path string, s *Scanner, v interface{}) error {
 	}
 
 	// we'll accumulate validation errors into this
-
 	var errs ValidationError
+	// we'll track found properties into this
+	gotProps := make([]bool, len(p.props))
+
 	for {
 		var key []byte
 
@@ -232,7 +242,7 @@ func (p *ObjectParser) Parse(path string, s *Scanner, v interface{}) error {
 		}
 
 		// get the appropriate prop
-		prop := p.getProp(key[1 : len(key)-1])
+		propIndex, prop := p.getProp(key[1 : len(key)-1])
 		if prop == nil {
 			if err := s.SkipValue(); err != nil {
 				return err
@@ -251,13 +261,17 @@ func (p *ObjectParser) Parse(path string, s *Scanner, v interface{}) error {
 			}
 
 			// parse the value
-			if err := prop.Schema.Parse("/", s, propval.Addr().Interface()); err != nil {
+			propPath := fmt.Sprintf("%s%s", path, key[1:len(key)-1])
+			if err := prop.Schema.Parse(propPath, s, propval.Addr().Interface()); err != nil {
 				if verr, ok := err.(ValidationError); ok {
 					errs = errs.AddMany(verr)
 				} else {
 					return err
 				}
 			}
+
+			// we got it!!
+			gotProps[propIndex] = true
 		}
 
 		// we want a , or a }
@@ -273,7 +287,16 @@ func (p *ObjectParser) Parse(path string, s *Scanner, v interface{}) error {
 		}
 	}
 
-	// TODO: check for mandatory fields
+	// check we got all the required fields
+	for i, prop := range p.props {
+		if gotProps[i] {
+			continue
+		}
+
+		if prop.required {
+			errs = errs.Add(path+p.props[i].Name, ERROR_PROP_REQUIRED)
+		}
+	}
 
 	if len(errs) > 0 {
 		return errs
@@ -431,13 +454,27 @@ func (p StringParser) Parse(path string, s *Scanner, v interface{}) error {
 	if ss, ok := v.(*string); !ok {
 		return fmt.Errorf(ERROR_BAD_STRING_DEST, reflect.TypeOf(v), path)
 	} else {
-		// TODO: Actually parse the thing, this is a fairly sub-optimal method
-		json.Unmarshal(buf, ss)
+		// now check for validation errors
+		var errs ValidationError
+
+		// TODO: parse ourselves, this is a fairly sub-optimal method
+		if err := json.Unmarshal(buf, ss); err != nil {
+			return errs.Add(path, err.Error())
+		}
+
+		// validate the contents
+		for _, v := range p.vs {
+			if err := v.ValidateString(*ss); err != nil {
+				errs = errs.Add(path, err.Error())
+			}
+		}
+
+		if len(errs) > 0 {
+			return errs
+		} else {
+			return nil
+		}
 	}
-
-	// TODO: Validate the strings contents
-
-	return nil
 }
 
 type BooleanParser struct {

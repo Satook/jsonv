@@ -15,6 +15,8 @@ const (
 	ERROR_INVALID_BOOL = "Expected a boolean, got %v"
 	ERROR_PARSE_BOOL   = "Error parsing bool, %v"
 
+	ERROR_PROP_REQUIRED = "Required"
+
 	ERROR_MIN_LEN_STR   = "Must be at least %d characters long"
 	ERROR_MAX_LEN_STR   = "Must be no more than %d characters long"
 	ERROR_PATTERN_MATCH = "Must match regex pattern %v"

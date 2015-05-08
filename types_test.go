@@ -160,6 +160,8 @@ func Test_SchemaTypeValidationErrors(t *testing.T) {
 		{Integer(MinI(7)), "5", new(int64), []string{"/"}},
 		{Integer(MaxI(3)), "5", new(int64), []string{"/"}},
 
+		{String(MaxLen(2)), `"TOo long"`, new(string), []string{"/"}},
+
 		// check the slice validators
 		{Slice(Integer(), MinLen(2)), "[]", new([]int64), []string{"/"}},
 		{Slice(Integer(), MinLen(2)), "[1]", new([]int64), []string{"/"}},
@@ -170,10 +172,14 @@ func Test_SchemaTypeValidationErrors(t *testing.T) {
 
 		// check object validators
 		//  required fields
-		/*		{Object(Prop("Captcha", String()), Prop("Fullname", String())),
-				`{"Captcha": "Zing"}`, new(simpleStruct), []string{"/Fullname"}},
-		*/
+		{Object(Prop("Captcha", String()), Prop("Fullname", String())),
+			`{"Captcha": "Zing"}`, new(simpleStruct), []string{"/Fullname"}},
+		{Object(Prop("Captcha", String()), Prop("Fullname", String())),
+			`{}`, new(simpleStruct), []string{"/Captcha", "/Fullname"}},
+
 		// check object collects up validation errors from sub-types
+		{Object(Prop("Captcha", String(MaxLen(2)))),
+			`{"Captcha": "Zing"}`, new(simpleStruct), []string{"/Captcha"}},
 	}
 
 	for i, c := range cases {
