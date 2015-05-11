@@ -58,17 +58,26 @@ func (m *MaxLenV) ValidateString(s string) error {
 }
 
 type PatternV struct {
-	r *regexp.Regexp
+	r   *regexp.Regexp
+	msg string
 }
 
-func Pattern(re string) *PatternV {
-	return &PatternV{regexp.MustCompile(re)}
+/*
+Builds a regex pattern based string validator.
+
+re: The regex string used for validation.
+message: A human friendly message to use in the ValidationError
+
+Note: Will panic if re fails to compile.
+*/
+func Pattern(re, message string) *PatternV {
+	return &PatternV{regexp.MustCompile(re), message}
 }
 
 func (p *PatternV) ValidateString(s string) error {
 	if p.r.MatchString(s) {
 		return nil
 	} else {
-		return fmt.Errorf(ERROR_PATTERN_MATCH, p.r.String())
+		return fmt.Errorf("%v", p.msg)
 	}
 }

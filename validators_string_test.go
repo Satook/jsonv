@@ -21,15 +21,15 @@ func Test_StringValidators(t *testing.T) {
 		{MaxLen(1), "", true},
 		{MaxLen(1), "sasas", false},
 
-		{Pattern("[a-z]+"), "sasas", true},
-		{Pattern("[a-z]+"), "SASASA", false},
-		{Pattern("[a-z]+"), "   sasas     ", true},    // should be non-anchored
-		{Pattern("^[a-z]+"), "sasas     ", true},      // but can be
-		{Pattern("^[a-z]+"), "    sasas     ", false}, // but can be
-		{Pattern("[a-z]+$"), "   sasas", true},
-		{Pattern("[a-z]+$"), "   sasas     ", false},
-		{Pattern("Z[a-z]+"), "Zsasas", true},
-		{Pattern("Z[a-z]+"), "sasas", false},
+		{Pattern("[a-z]+", "Must be at least one lowercase letter"), "sasas", true},
+		{Pattern("[a-z]+", ""), "SASASA", false},
+		{Pattern("[a-z]+", ""), "   sasas     ", true},    // should be non-anchored
+		{Pattern("^[a-z]+", ""), "sasas     ", true},      // but can be
+		{Pattern("^[a-z]+", ""), "    sasas     ", false}, // but can be
+		{Pattern("[a-z]+$", ""), "   sasas", true},
+		{Pattern("[a-z]+$", ""), "   sasas     ", false},
+		{Pattern("Z[a-z]+", ""), "Zsasas", true},
+		{Pattern("Z[a-z]+", ""), "sasas", false},
 	}
 
 	for i, c := range cases {
