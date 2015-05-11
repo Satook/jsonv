@@ -77,7 +77,6 @@ func Test_SchemaTypeParse(t *testing.T) {
 		{String(), `"Something with \n \\ "`, "Something with \n \\ "},
 		{String(), `"Unicode!! \u2318"`, "Unicode!! \u2318"},
 
-		// object
 		// with all props
 		{Object(Prop("Captcha", String()), Prop("Fullname", String())),
 			`{"Captcha": "Zing", "Fullname":"Bob" }`, simpleStruct{"Zing", "Bob"}},
@@ -177,9 +176,9 @@ func Test_SchemaTypeValidationErrors(t *testing.T) {
 		{String(MaxLen(2)), `"TOo long"`, new(string), []string{"/"}},
 
 		// check the slice validators
-		{Slice(Integer(), MinLen(2)), "[]", new([]int64), []string{"/"}},
-		{Slice(Integer(), MinLen(2)), "[1]", new([]int64), []string{"/"}},
-		{Slice(Integer(), MaxLen(1)), "[1,2,3]", new([]int64), []string{"/"}},
+		{Slice(Integer(), MinItems(2)), "[]", new([]int64), []string{"/"}},
+		{Slice(Integer(), MinItems(2)), "[1]", new([]int64), []string{"/"}},
+		{Slice(Integer(), MaxItems(1)), "[1,2,3]", new([]int64), []string{"/"}},
 		// check slice also collects up validation errors from sub-types
 		{Slice(Integer(MaxI(5))), "[1,7,3]", new([]int64), []string{"/1/"}},
 		{Slice(Integer(MaxI(5))), "[12,1,7,3]", new([]int64), []string{"/0/", "/2/"}},

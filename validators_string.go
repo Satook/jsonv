@@ -15,11 +15,39 @@ func (f StringValidatorFunc) ValidateString(s string) error {
 	return f(s)
 }
 
+/*
+The Min Length validator.
+*/
+type MinLenV struct {
+	l int
+}
+
+func MinLen(l int) *MinLenV {
+	if l < 0 {
+		panic(fmt.Errorf("Minimum allowed length must be >= 0"))
+	}
+	return &MinLenV{l}
+}
+
 func (m *MinLenV) ValidateString(s string) error {
 	if len(s) < m.l {
 		return fmt.Errorf(ERROR_MIN_LEN_STR, m.l)
 	}
 	return nil
+}
+
+/*
+The Max Length validator.
+*/
+type MaxLenV struct {
+	l int
+}
+
+func MaxLen(l int) *MaxLenV {
+	if l < 0 {
+		panic(fmt.Errorf("Maximum allowed length must be >= 0"))
+	}
+	return &MaxLenV{l}
 }
 
 func (m *MaxLenV) ValidateString(s string) error {
