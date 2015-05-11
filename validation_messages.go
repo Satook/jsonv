@@ -30,4 +30,7 @@ const (
 	ERROR_MIN_EX = "Must be greater than %v"
 	ERROR_MIN    = "Must be greater than or equal to %v"
 	ERROR_MULOF  = "Must be a multiple of %v"
+
+	ERROR_NIL_DEFAULT        = `Default for "%v" cannot be nil. Use a ptr field with no default instead.`
+	ERROR_WRONG_TYPE_DEFAULT = "Default value must be the same type as field. Got %v, want %v"
 )

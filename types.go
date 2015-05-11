@@ -41,14 +41,27 @@ Holds the name and parser/validator for a single JSON object property
 Note: Whether or not the value any non-slice, non-ptr field is required
 */
 type ObjectProp struct {
-	Name     string
-	Schema   SchemaType
+	schema   SchemaType
+	def      reflect.Value
 	f        field
 	required bool
 }
 
 func Prop(n string, s SchemaType) ObjectProp {
-	return ObjectProp{n, s, field{nameBytes: []byte(n)}, false}
+	return ObjectProp{
+		schema:   s,
+		f:        field{nameBytes: []byte(n)},
+		required: true,
+	}
+}
+
+func PropWithDefault(n string, s SchemaType, d interface{}) ObjectProp {
+	return ObjectProp{
+		schema:   s,
+		def:      reflect.ValueOf(d),
+		f:        field{nameBytes: []byte(n)},
+		required: true,
+	}
 }
 
 /*
@@ -143,11 +156,26 @@ func (p *ObjectParser) Prepare(t reflect.Type) error {
 		if prop != nil {
 			prop.f = *f
 
+			if prop.def.IsValid() {
+				// fix prop.def want leaf value, not ptr
+				for prop.def.Kind() == reflect.Ptr {
+					if prop.def.IsNil() {
+						return fmt.Errorf(ERROR_NIL_DEFAULT, prop.f.name)
+					}
+				}
+
+				// make sure default type is the same as the field type
+				dtyp := prop.def.Type()
+				if f.typ != dtyp {
+					return fmt.Errorf(ERROR_WRONG_TYPE_DEFAULT, dtyp, f.typ)
+				}
+			}
+
 			// determine if it's a required field (field.typ) is always the
 			// concrete type
 			ft := t.FieldByIndex(f.index)
 			prop.required = ft.Type.Kind() != reflect.Ptr
-			if ps, ok := prop.Schema.(PreparedSchemaType); ok {
+			if ps, ok := prop.schema.(PreparedSchemaType); ok {
 				if err := ps.Prepare(f.typ); err != nil {
 					return err
 				}
@@ -160,7 +188,7 @@ func (p *ObjectParser) Prepare(t reflect.Type) error {
 	for i := range p.props {
 		pr := &p.props[i]
 		if pr.f.index == nil {
-			missingFields = append(missingFields, pr.Name)
+			missingFields = append(missingFields, pr.f.name)
 		}
 	}
 	if len(missingFields) > 0 {
@@ -262,7 +290,7 @@ func (p *ObjectParser) Parse(path string, s *Scanner, v interface{}) error {
 
 			// parse the value
 			propPath := fmt.Sprintf("%s%s", path, key[1:len(key)-1])
-			if err := prop.Schema.Parse(propPath, s, propval.Addr().Interface()); err != nil {
+			if err := prop.schema.Parse(propPath, s, propval.Addr().Interface()); err != nil {
 				if verr, ok := err.(ValidationError); ok {
 					errs = errs.AddMany(verr)
 				} else {
@@ -293,8 +321,24 @@ func (p *ObjectParser) Parse(path string, s *Scanner, v interface{}) error {
 			continue
 		}
 
-		if prop.required {
-			errs = errs.Add(path+p.props[i].Name, ERROR_PROP_REQUIRED)
+		// does it have a default??
+		if prop.def.IsValid() {
+			// get a value referencing the firld
+			propval := val
+			for _, i := range prop.f.index {
+				propval = propval.Field(i)
+				if propval.Kind() == reflect.Ptr {
+					if propval.IsNil() {
+						propval.Set(reflect.New(propval.Type().Elem()))
+					}
+					propval = propval.Elem()
+				}
+			}
+
+			// now set it
+			propval.Set(prop.def)
+		} else if prop.required {
+			errs = errs.Add(path+p.props[i].f.name, ERROR_PROP_REQUIRED)
 		}
 	}
 

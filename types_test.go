@@ -51,6 +51,14 @@ func Test_SchemaTypeParse(t *testing.T) {
 		Other *string
 	}
 
+	type manyStruct struct {
+		Name  string
+		IVal  int64
+		BVal  bool
+		SlVal []string
+		StVal simpleStruct
+	}
+
 	bobStr := "Bob"
 
 	cases := []struct {
@@ -80,6 +88,16 @@ func Test_SchemaTypeParse(t *testing.T) {
 		{Object(Prop("Captcha", String())),
 			`{"Captcha": "Zing", "Fullname":{"favs": [1,2,3], "zing": "zong"} }`, simpleStruct{"Zing", ""}},
 
+		// structs with default props
+		{Object(PropWithDefault("Name", String(), "Weee")), `{}`, manyStruct{Name: "Weee"}},
+		{Object(PropWithDefault("IVal", Integer(), int64(76))), `{}`, manyStruct{IVal: 76}},
+		{Object(PropWithDefault("BVal", Boolean(), true)), `{}`, manyStruct{BVal: true}},
+		{Object(PropWithDefault("SlVal", Slice(String()), []string{"dood", "wood"})), `{}`, manyStruct{SlVal: []string{"dood", "wood"}}},
+		{Object(PropWithDefault("StVal", Object(Prop("Captcha", String())), simpleStruct{"Zing", ""})), `{}`, manyStruct{StVal: simpleStruct{"Zing", ""}}},
+
+		// mix default and non
+		{Object(PropWithDefault("Name", String(), "Weee"), Prop("IVal", Integer())), `{"IVal": 12}`, manyStruct{Name: "Weee", IVal: 12}},
+
 		{Slice(Object(Prop("Captcha", String()))),
 			`[{"Captcha": "Zings", "Fullname":"Bobs" }]`, []simpleStruct{{"Zings", ""}}},
 		{Slice(Integer()),
@@ -101,11 +119,7 @@ func Test_SchemaTypeParse(t *testing.T) {
 		destPtr := reflect.New(reflect.TypeOf(c.want))
 		if err := tryParse(c.t, c.json, destPtr.Interface(), c.want); err != nil {
 			t.Errorf("Case %d %v", i, err)
-		}
-
-		got := destPtr.Elem().Interface()
-		if !reflect.DeepEqual(got, c.want) {
-			t.Errorf("Case %d: Got %+v, want %+v", i, got, c.want)
+			continue
 		}
 	}
 }
