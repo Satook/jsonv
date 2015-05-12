@@ -495,6 +495,8 @@ func (p StringParser) Parse(path string, s *Scanner, v interface{}) error {
 		return err
 	}
 
+	fmt.Printf("Got string token:\n\tlen: %d\n\tchars \"%s\"\n", len(buf), buf)
+
 	if ss, ok := v.(*string); !ok {
 		return fmt.Errorf(ERROR_BAD_STRING_DEST, reflect.TypeOf(v), path)
 	} else {
@@ -503,6 +505,7 @@ func (p StringParser) Parse(path string, s *Scanner, v interface{}) error {
 
 		// TODO: parse ourselves, this is a fairly sub-optimal method
 		if err := json.Unmarshal(buf, ss); err != nil {
+			fmt.Printf("Unmarshal error: %v\n", err)
 			return errs.Add(path, err.Error())
 		}
 

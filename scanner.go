@@ -345,7 +345,7 @@ func (s *Scanner) ReadToken() (TokenType, []byte, error) {
 			if offset == escapePos+1 {
 				// this char is escaped
 			} else if char == '"' {
-				// this is a non-escaped "
+				// this is a non-escaped ", i.e. the end of the string
 				tok = tokenString
 				buf := s.buf[s.roff : s.roff+offset+1]
 				s.roff += len(buf)
@@ -455,14 +455,13 @@ func (s *Scanner) fillBuffer() error {
 			// buffer can fit if we eliminate already processed data
 			rest := copy(s.buf, s.buf[s.roff:])
 			s.buf = s.buf[0:rest]
-			s.roff = 0
 		} else {
 			// need a bigger buffer
-			newBuf := make([]byte, len(s.buf), 2*cap(s.buf)+READ_LEN)
+			newBuf := make([]byte, used, 2*cap(s.buf)+READ_LEN)
 			copy(newBuf, s.buf[s.roff:])
 			s.buf = newBuf
-			s.roff = 0
 		}
+		s.roff = 0
 	}
 
 	// now read it in and store any potential error for post-parse checking

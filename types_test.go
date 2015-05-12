@@ -45,6 +45,14 @@ func tryParse(t SchemaType, json string, dest interface{}, want interface{}) err
 	return nil
 }
 
+type trainer struct {
+	Captcha  string
+	Fullname string
+	Email    string
+	Mobile   string
+	Password string
+}
+
 func Test_SchemaTypeParse(t *testing.T) {
 	type ptrStruct struct {
 		Name  string
@@ -112,13 +120,24 @@ func Test_SchemaTypeParse(t *testing.T) {
 			Prop("Name", String()),
 			Prop("Other", String()),
 		), `{"Name": "Zing"}`, ptrStruct{"Zing", nil}},
+
+		// big enough to force a buffer re-size mid string.
+		{Object(
+			PropWithDefault("Captcha", String(), ""),
+			Prop("Fullname", String()),
+			Prop("Email", String()),
+			Prop("Mobile", String()),
+			Prop("Password", String()),
+		),
+			`{"Fullname":"kjsadhlkfjdshalkhjdfsa","Mobile":"2309485702349857","Email":"laksdjfh@asdlkihfalsdkifhj","Password":"alksdjfghlaksdf","Captcha":"03AHJ_VutuNyz928BySmbXvafmtG90YdwZdYCTCN0FYLE2IWnzXlpqb1GVAVmggjrMQqXak0mQMZQK5JI5y-5kfZcImtTjFW3tizGPU-RyBgrZ2mLXtZplYGBdRjHA7WHVrKuD4rjtJtZ6DOnGxwceNDJCdeaJopGFujvDqxMADt-ovlWC9_vLVfvjo-y_1hO0Wdw_QbWzPqeKy0FLGN5pv-dTnmd9WcwN2EW54V8Y4RkPnEMWgnzlJIdzVNoFpkHysQ_jR_jE1FfPQt5ZSbQw3Ey3p1dPSFp_ee7vSyk9QMyIqbgRXhB5kOXTCil87Oq6Fb76Y8cBt-hMzO8c8uk_aoWS0QdOTGvMtx1blQPECsCbAUjzuKHilH6beECyJzgA6nFQytQ2Ne1Dz1-y6ML6wg6ANeeAPjojbIo5xZGGXnY5ruzahIhsTZY"}`,
+			trainer{"03AHJ_VutuNyz928BySmbXvafmtG90YdwZdYCTCN0FYLE2IWnzXlpqb1GVAVmggjrMQqXak0mQMZQK5JI5y-5kfZcImtTjFW3tizGPU-RyBgrZ2mLXtZplYGBdRjHA7WHVrKuD4rjtJtZ6DOnGxwceNDJCdeaJopGFujvDqxMADt-ovlWC9_vLVfvjo-y_1hO0Wdw_QbWzPqeKy0FLGN5pv-dTnmd9WcwN2EW54V8Y4RkPnEMWgnzlJIdzVNoFpkHysQ_jR_jE1FfPQt5ZSbQw3Ey3p1dPSFp_ee7vSyk9QMyIqbgRXhB5kOXTCil87Oq6Fb76Y8cBt-hMzO8c8uk_aoWS0QdOTGvMtx1blQPECsCbAUjzuKHilH6beECyJzgA6nFQytQ2Ne1Dz1-y6ML6wg6ANeeAPjojbIo5xZGGXnY5ruzahIhsTZY", "kjsadhlkfjdshalkhjdfsa", "laksdjfh@asdlkihfalsdkifhj", "2309485702349857", "alksdjfghlaksdf"}},
 	}
 
 	for i, c := range cases {
+		t.Logf("Starting case %d", i)
 		destPtr := reflect.New(reflect.TypeOf(c.want))
 		if err := tryParse(c.t, c.json, destPtr.Interface(), c.want); err != nil {
-			t.Errorf("Case %d %v", i, err)
-			continue
+			t.Fatalf("Case %d %v", i, err)
 		}
 	}
 }
