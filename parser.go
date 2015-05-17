@@ -107,7 +107,7 @@ Parses, and validates b into the v.
 Will panic if b is not a pointer to the same type as was used to construct this
 parser.
 */
-func (p *ValidatingParser) Parse(r io.Reader, v interface{}) []InvalidData {
+func (p *ValidatingParser) Parse(r io.Reader, v interface{}) error {
 	// check the type is correct
 	// we must get a Ptr to same type as was given on creation
 	tPtr := reflect.TypeOf(v)
@@ -122,8 +122,10 @@ func (p *ValidatingParser) Parse(r io.Reader, v interface{}) []InvalidData {
 			return verr
 		} else if perr, ok := err.(*ParseError); ok {
 			return NewSingleVErr("/", perr.Error())
+		} else if err == io.EOF {
+			return NewSingleVErr("/", "Unexpected end of input during parsing")
 		} else {
-			panic(err)
+			return err
 		}
 	}
 
