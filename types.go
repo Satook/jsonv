@@ -2,7 +2,6 @@ package jsonv
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -502,10 +501,12 @@ func (p StringParser) Parse(path string, s *Scanner, v interface{}) error {
 		var errs ValidationError
 
 		// TODO: parse ourselves, this is a fairly sub-optimal method
-		if err := json.Unmarshal(buf, ss); err != nil {
-			fmt.Printf("Unmarshal error: %v\n", err)
-			return errs.Add(path, err.Error())
+		s, ok := Unquote(buf)
+		if !ok {
+			return errs.Add(path, "Invalid string")
 		}
+
+		*ss = s
 
 		// validate the contents
 		for _, v := range p.vs {
