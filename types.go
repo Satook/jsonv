@@ -470,7 +470,10 @@ func (p *SliceParser) Parse(path string, s *Scanner, v interface{}) error {
 
 /*
 A simple parser that accepts only a JSON string value and stores the result in
-a *string.
+a *string or string field on a struct.
+
+The value will be parsed (i.e. escaped chars and unicode chars parsed). Invalid
+unicode code points will be replaced with unicode.ReplacementChar.
 */
 type StringParser struct {
 	vs []StringValidator
@@ -488,10 +491,12 @@ func (p *StringParser) Prepare(t reflect.Type) error {
 	return nil
 }
 
-func (p StringParser) Parse(path string, s *Scanner, v interface{}) error {
+func (p *StringParser) Parse(path string, s *Scanner, v interface{}) error {
 	tok, buf, err := s.ReadToken()
 	if tok == tokenError {
 		return err
+	} else if tok != tokenString {
+		return NewSingleVErr(path, fmt.Sprintf(ERROR_INVALID_STRING, string(buf)))
 	}
 
 	if ss, ok := v.(*string); !ok {
@@ -500,7 +505,6 @@ func (p StringParser) Parse(path string, s *Scanner, v interface{}) error {
 		// now check for validation errors
 		var errs ValidationError
 
-		// TODO: parse ourselves, this is a fairly sub-optimal method
 		s, ok := Unquote(buf)
 		if !ok {
 			return errs.Add(path, "Invalid string")
@@ -523,6 +527,12 @@ func (p StringParser) Parse(path string, s *Scanner, v interface{}) error {
 	}
 }
 
+/*
+Parses true/false JSON values into a *bool/*string or bool/string struct field.
+
+For strings, the literal text "false"/"true", without quotes, is assigned to the
+string.
+*/
 type BooleanParser struct {
 }
 
@@ -531,7 +541,7 @@ func Boolean() *BooleanParser {
 }
 
 func (p *BooleanParser) Prepare(t reflect.Type) error {
-	if t.Kind() != reflect.Bool {
+	if t.Kind() != reflect.Bool && t.Kind() != reflect.String {
 		return fmt.Errorf("Want bool not %v", t)
 	}
 
@@ -561,8 +571,92 @@ func (p *BooleanParser) Parse(path string, s *Scanner, v interface{}) error {
 }
 
 /*
-Accepts any whole-integer JSON number value and stores it in any Go integer
-primative type, e.g. int8, int16, uint8, etc.
+Parses strings into byte slices, i.e []byte, This still decodes the string value
+but avoids making additional copies of the data when a byte slice is required
+(e.g. decoding/decryption/etc).
+*/
+type ByteSliceParser struct {
+}
+
+func Bytes() *ByteSliceParser {
+	return &ByteSliceParser{}
+}
+
+func (p *ByteSliceParser) Prepare(t reflect.Type) error {
+	if t.Kind() != reflect.Slice || t.Elem().Kind() != reflect.Uint8 {
+		return fmt.Errorf("Want []byte not %v", t)
+	}
+
+	return nil
+}
+
+func (p *ByteSliceParser) Parse(path string, s *Scanner, v interface{}) error {
+	tok, buf, err := s.ReadToken()
+	if tok == tokenError {
+		return err
+	} else if tok != tokenString {
+		return NewSingleVErr(path, fmt.Sprintf(ERROR_INVALID_STRING, string(buf)))
+	}
+
+	if bdest, ok := v.(*[]byte); !ok {
+		return fmt.Errorf(ERROR_BAD_BYTE_DEST, reflect.TypeOf(v), path)
+	} else {
+		buff, ok := UnquoteBytes(buf)
+		if !ok {
+			var errs ValidationError
+			return errs.Add(path, "Invalid string")
+		}
+
+		*bdest = buff
+	}
+
+	return nil
+}
+
+/*
+Parses strings into byte slices, i.e []byte. This does not decode the string
+value, so escape sequences (e.g. "\n", "\u0020") will be left as-is.
+
+This is useful if the value is only ever meant to be non-escaped chars, e.g. a
+base64 encoded string.
+*/
+type RawByteSliceParser struct {
+}
+
+func RawBytes() *RawByteSliceParser {
+	return &RawByteSliceParser{}
+}
+
+func (p *RawByteSliceParser) Prepare(t reflect.Type) error {
+	if t.Kind() != reflect.Slice || t.Elem().Kind() != reflect.Uint8 {
+		return fmt.Errorf("Want []byte not %v", t)
+	}
+
+	return nil
+}
+
+func (p *RawByteSliceParser) Parse(path string, s *Scanner, v interface{}) error {
+	tok, buf, err := s.ReadToken()
+	if tok == tokenError {
+		return err
+	} else if tok != tokenString {
+		return NewSingleVErr(path, fmt.Sprintf(ERROR_INVALID_STRING, string(buf)))
+	}
+
+	if bdest, ok := v.(*[]byte); !ok {
+		return fmt.Errorf(ERROR_BAD_BYTE_DEST, reflect.TypeOf(v), path)
+	} else {
+		// scanner owns buf, so we need to make a copy
+		*bdest = make([]byte, len(buf)-2)
+		copy(*bdest, buf[1:len(buf)-1])
+	}
+
+	return nil
+}
+
+/*
+Parses any whole-integer JSON number value and stores it in any Go integer
+primitive type, e.g. int8, int16, uint8, etc.
 */
 type IntegerParser struct {
 	vs []IntegerValidator

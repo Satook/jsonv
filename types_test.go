@@ -80,10 +80,18 @@ func Test_SchemaTypeParse(t *testing.T) {
 
 		{Boolean(), "true", true},
 		{Boolean(), "false", false},
+		{Boolean(), "true", "true"},
+		{Boolean(), "false", "false"},
 
 		{String(), `"false"`, "false"},
 		{String(), `"Something with \n \\ "`, "Something with \n \\ "},
 		{String(), `"Unicode!! \u2318"`, "Unicode!! \u2318"},
+
+		{Bytes(), `"false"`, []byte("false")},
+		{Bytes(), `"Something with \n \\ "`, []byte("Something with \n \\ ")},
+
+		{RawBytes(), `"false"`, []byte("false")},
+		{RawBytes(), `"Something with \n \\ "`, []byte("Something with \\n \\\\ ")},
 
 		// with all props
 		{Object(Prop("Captcha", String()), Prop("Fullname", String())),
