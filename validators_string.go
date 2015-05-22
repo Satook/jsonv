@@ -9,10 +9,20 @@ type StringValidator interface {
 	ValidateString(s string) error
 }
 
+type BytesValidator interface {
+	ValidateBytes(b []byte) error
+}
+
 type StringValidatorFunc func(s string) error
 
 func (f StringValidatorFunc) ValidateString(s string) error {
 	return f(s)
+}
+
+type BytesValidatorFunc func(b []byte) error
+
+func (f BytesValidatorFunc) ValidateBytes(b []byte) error {
+	return f(b)
 }
 
 /*
@@ -36,6 +46,13 @@ func (m *MinLenV) ValidateString(s string) error {
 	return nil
 }
 
+func (m *MinLenV) ValidateBytes(b []byte) error {
+	if len(b) < m.l {
+		return fmt.Errorf(ERROR_MIN_LEN_STR, m.l)
+	}
+	return nil
+}
+
 /*
 The Max Length validator.
 */
@@ -52,6 +69,13 @@ func MaxLen(l int) *MaxLenV {
 
 func (m *MaxLenV) ValidateString(s string) error {
 	if len(s) > m.l {
+		return fmt.Errorf(ERROR_MAX_LEN_STR, m.l)
+	}
+	return nil
+}
+
+func (m *MaxLenV) ValidateBytes(b []byte) error {
+	if len(b) > m.l {
 		return fmt.Errorf(ERROR_MAX_LEN_STR, m.l)
 	}
 	return nil

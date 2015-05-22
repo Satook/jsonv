@@ -20,7 +20,7 @@ func Test_ParseSimpleSuccess(t *testing.T) {
 		{Integer(), "123", int64(123)},
 		{Boolean(), "true", true},
 		{
-			Object(
+			Struct(
 				Prop("Captcha", String()),
 				Prop("Fullname", String()),
 			),
@@ -30,7 +30,7 @@ func Test_ParseSimpleSuccess(t *testing.T) {
 	}
 
 	for i, c := range cases {
-		destPtr := reflect.New(reflect.TypeOf(c.want)) // allocate a fresh object, same type as c.want
+		destPtr := reflect.New(reflect.TypeOf(c.want)) // allocate a fresh Struct, same type as c.want
 		parser := Parser(destPtr.Interface(), c.schema)
 
 		t.Logf("Running parser")
@@ -67,24 +67,24 @@ func Test_parserBadTypes(t *testing.T) {
 		{Integer(), new(float64)},
 		{Boolean(), new(float64)},
 		{String(), new(float64)},
-		{Object(), new(float64)},
-		{Slice(Object()), new(float64)},
+		{Struct(), new(float64)},
+		{Slice(Struct()), new(float64)},
 
 		// nested type checks
 		// dest type have all the props
-		{Object(
+		{Struct(
 			Prop("Name", String()),
 		), new(dumbStruct)},
-		{Object(
+		{Struct(
 			Prop("Name", String()),
 			Prop("Silly", String()),
 		), new(dumbStruct)},
 		// dest type props must have a type that each prop parser can map to
-		{Object(Prop("Name", String())), new(intName)},
+		{Struct(Prop("Name", String())), new(intName)},
 
 		// slices too!
-		{Slice(Object(Prop("Name", String()))), make([]dumbStruct, 0, 10)},
-		{Slice(Object(Prop("Name", String()))), make([]intName, 0, 10)},
+		{Slice(Struct(Prop("Name", String()))), make([]dumbStruct, 0, 10)},
+		{Slice(Struct(Prop("Name", String()))), make([]intName, 0, 10)},
 	}
 
 	for i, c := range cases {

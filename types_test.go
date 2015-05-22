@@ -94,43 +94,43 @@ func Test_SchemaTypeParse(t *testing.T) {
 		{RawBytes(), `"Something with \n \\ "`, []byte("Something with \\n \\\\ ")},
 
 		// with all props
-		{Object(Prop("Captcha", String()), Prop("Fullname", String())),
+		{Struct(Prop("Captcha", String()), Prop("Fullname", String())),
 			`{"Captcha": "Zing", "Fullname":"Bob" }`, simpleStruct{"Zing", "Bob"}},
 		// with extra prop (on struct but not requested
-		{Object(Prop("Captcha", String())),
+		{Struct(Prop("Captcha", String())),
 			`{"Captcha": "Zing", "Fullname":"Bob" }`, simpleStruct{"Zing", ""}},
 		// with extra complex prop that was not requested
-		{Object(Prop("Captcha", String())),
+		{Struct(Prop("Captcha", String())),
 			`{"Captcha": "Zing", "Fullname":{"favs": [1,2,3], "zing": "zong"} }`, simpleStruct{"Zing", ""}},
 
 		// structs with default props
-		{Object(PropWithDefault("Name", String(), "Weee")), `{}`, manyStruct{Name: "Weee"}},
-		{Object(PropWithDefault("IVal", Integer(), int64(76))), `{}`, manyStruct{IVal: 76}},
-		{Object(PropWithDefault("BVal", Boolean(), true)), `{}`, manyStruct{BVal: true}},
-		{Object(PropWithDefault("SlVal", Slice(String()), []string{"dood", "wood"})), `{}`, manyStruct{SlVal: []string{"dood", "wood"}}},
-		{Object(PropWithDefault("StVal", Object(Prop("Captcha", String())), simpleStruct{"Zing", ""})), `{}`, manyStruct{StVal: simpleStruct{"Zing", ""}}},
+		{Struct(PropWithDefault("Name", String(), "Weee")), `{}`, manyStruct{Name: "Weee"}},
+		{Struct(PropWithDefault("IVal", Integer(), int64(76))), `{}`, manyStruct{IVal: 76}},
+		{Struct(PropWithDefault("BVal", Boolean(), true)), `{}`, manyStruct{BVal: true}},
+		{Struct(PropWithDefault("SlVal", Slice(String()), []string{"dood", "wood"})), `{}`, manyStruct{SlVal: []string{"dood", "wood"}}},
+		{Struct(PropWithDefault("StVal", Struct(Prop("Captcha", String())), simpleStruct{"Zing", ""})), `{}`, manyStruct{StVal: simpleStruct{"Zing", ""}}},
 
 		// mix default and non
-		{Object(PropWithDefault("Name", String(), "Weee"), Prop("IVal", Integer())), `{"IVal": 12}`, manyStruct{Name: "Weee", IVal: 12}},
+		{Struct(PropWithDefault("Name", String(), "Weee"), Prop("IVal", Integer())), `{"IVal": 12}`, manyStruct{Name: "Weee", IVal: 12}},
 
-		{Slice(Object(Prop("Captcha", String()))),
+		{Slice(Struct(Prop("Captcha", String()))),
 			`[{"Captcha": "Zings", "Fullname":"Bobs" }]`, []simpleStruct{{"Zings", ""}}},
 		{Slice(Integer()),
 			`[1,2,3,45, -12]`, []int64{1, 2, 3, 45, -12}},
 
 		// test that a struct with Pointer attrs is handled properly
-		{Object(
+		{Struct(
 			Prop("Name", String()),
 			Prop("Other", String()),
 		), `{"Name": "Zing", "Other":"Bob" }`, ptrStruct{"Zing", &bobStr}},
 		// test that nils come across properly
-		{Object(
+		{Struct(
 			Prop("Name", String()),
 			Prop("Other", String()),
 		), `{"Name": "Zing"}`, ptrStruct{"Zing", nil}},
 
 		// big enough to force a buffer re-size mid string.
-		{Object(
+		{Struct(
 			PropWithDefault("Captcha", String(), ""),
 			Prop("Fullname", String()),
 			Prop("Email", String()),
@@ -210,15 +210,15 @@ func Test_SchemaTypeValidationErrors(t *testing.T) {
 		{Slice(Integer(MaxI(5))), "[1,7,3]", new([]int64), []string{"/1/"}},
 		{Slice(Integer(MaxI(5))), "[12,1,7,3]", new([]int64), []string{"/0/", "/2/"}},
 
-		// check object validators
+		// check Struct validators
 		//  required fields
-		{Object(Prop("Captcha", String()), Prop("Fullname", String())),
+		{Struct(Prop("Captcha", String()), Prop("Fullname", String())),
 			`{"Captcha": "Zing"}`, new(simpleStruct), []string{"/Fullname"}},
-		{Object(Prop("Captcha", String()), Prop("Fullname", String())),
+		{Struct(Prop("Captcha", String()), Prop("Fullname", String())),
 			`{}`, new(simpleStruct), []string{"/Captcha", "/Fullname"}},
 
-		// check object collects up validation errors from sub-types
-		{Object(Prop("Captcha", String(MaxLen(2)))),
+		// check Struct collects up validation errors from sub-types
+		{Struct(Prop("Captcha", String(MaxLen(2)))),
 			`{"Captcha": "Zing"}`, new(simpleStruct), []string{"/Captcha"}},
 	}
 
