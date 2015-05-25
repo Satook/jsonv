@@ -130,3 +130,55 @@ func Test_scannerSkipValue(t *testing.T) {
 		}
 	}
 }
+
+func Test_scannerLargeSource(t *testing.T) {
+	data1 := []byte(`{"Name": "Angelo","Age":24,"Friends":["Bob","Jim","Jenny"]}`)
+	data := make([]byte, len(data1)*1024+2+1023)
+	for i := 0; i < 1024; i++ {
+		offset := 1 + (len(data1)+1)*i
+		copy(data[offset:], data1)
+		data[offset+len(data1)] = ','
+	}
+	data[0] = '['
+	data[len(data)-1] = ']'
+
+	wantToks := []TokenType{tokenObjectBegin,
+		tokenString, tokenPropSep, tokenString, tokenItemSep,
+		tokenString, tokenPropSep, tokenNumber, tokenItemSep,
+		tokenString, tokenPropSep, tokenArrayBegin,
+		tokenString, tokenItemSep, tokenString, tokenItemSep, tokenString,
+		tokenArrayEnd, tokenObjectEnd, tokenItemSep,
+	}
+	lenWantToks := len(wantToks)
+
+	// read 1024 objects + ',' chars without a trailing ',' char
+	toksToRead := lenWantToks*1024 - 1
+
+	// start scanning
+	s := NewScanner(bytes.NewReader(data))
+
+	// read array start
+	tok, _, err := s.ReadToken()
+	if tok != tokenArrayBegin {
+		t.Fatalf("Got %v, err %v. Want %v", tok, err, tokenArrayBegin)
+	}
+
+	for i := 0; i < toksToRead; i++ {
+		got, buf, err := s.ReadToken()
+		if got == tokenError {
+			t.Fatal(err)
+		}
+
+		t.Logf("token: %v %s", got, buf)
+
+		want := wantToks[i%lenWantToks]
+		if got != want {
+			t.Fatalf("Token %d: Got %v, want %v", i, got, want)
+		}
+	}
+
+	// read the array end
+	if tok, _, err := s.ReadToken(); tok != tokenArrayEnd {
+		t.Fatalf("Got %v, err %v. Want %v", tok, err, tokenArrayEnd)
+	}
+}

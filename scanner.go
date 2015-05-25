@@ -460,7 +460,11 @@ func (s *Scanner) fillBuffer() error {
 			s.buf = s.buf[0:rest]
 		} else {
 			// need a bigger buffer
-			newBuf := make([]byte, used, 2*cap(s.buf)+READ_LEN)
+			newCap := 2 * cap(s.buf)
+			if newCap < READ_LEN*4 {
+				newCap = READ_LEN * 4
+			}
+			newBuf := make([]byte, used, newCap)
 			copy(newBuf, s.buf[s.roff:])
 			s.buf = newBuf
 		}

@@ -70,6 +70,7 @@ func Test_SchemaTypeParse(t *testing.T) {
 		BVal  bool
 		SlVal []string
 		StVal simpleStruct
+		SbVal []byte
 	}
 
 	bobStr := "Bob"
@@ -96,6 +97,7 @@ func Test_SchemaTypeParse(t *testing.T) {
 
 		{Bytes(), `"false"`, []byte("false")},
 		{Bytes(), `"Something with \n \\ "`, []byte("Something with \n \\ ")},
+		{Bytes(MinLen(5), MaxLen(500)), `"Something with \n \\ "`, []byte("Something with \n \\ ")},
 
 		{RawBytes(), `"false"`, []byte("false")},
 		{RawBytes(), `"Something with \n \\ "`, []byte("Something with \\n \\\\ ")},
@@ -135,6 +137,10 @@ func Test_SchemaTypeParse(t *testing.T) {
 			Prop("Name", String()),
 			Prop("Other", String()),
 		), `{"Name": "Zing"}`, ptrStruct{"Zing", nil}},
+		// test a struct field of type []byte
+		{Struct(
+			Prop("SbVal", Bytes()),
+		), `{"SbVal": "Alpha"}`, manyStruct{SbVal: []byte("Alpha")}},
 
 		// big enough to force a buffer re-size mid string.
 		{Struct(
@@ -154,6 +160,24 @@ func Test_SchemaTypeParse(t *testing.T) {
 		if err := tryParse(c.t, c.json, destPtr.Interface(), c.want); err != nil {
 			t.Fatalf("Case %d %v", i, err)
 		}
+	}
+}
+
+/*
+Specific bug came up where the Struct parser was using a buf returned from
+scanner after having called ReadToken a second time, meaning the first buf was
+overwritten by a "Slide left" operation within Scanner.fillBuffer.
+*/
+func Test_StructSlideLeft(t *testing.T) {
+	schema := Struct(Prop("Captcha", String()))
+
+	// I need the : on char pos 512, but also enough data afterwards to overwrite the keyname
+	jd := `{                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      "Captcha":"Val"}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            `
+	want := simpleStruct{Captcha: "Val"}
+	var got simpleStruct
+
+	if err := tryParse(schema, jd, &got, want); err != nil {
+		t.Fatal(err)
 	}
 }
 

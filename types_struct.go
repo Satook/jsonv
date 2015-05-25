@@ -218,10 +218,12 @@ func (p *StructParser) Parse(path string, s *Scanner, v interface{}) error {
 	var errs ValidationError
 	// we'll track found properties into this
 	gotProps := make([]bool, len(p.props))
+	// reused to reference the prop
+	var prop *StructPropInfo
+	var propIndex int
+	var propPath string
 
 	for {
-		var key []byte
-
 		// read the key, or '}'
 		if tok, keyb, err := s.ReadToken(); tok == tokenError {
 			return err
@@ -230,18 +232,21 @@ func (p *StructParser) Parse(path string, s *Scanner, v interface{}) error {
 		} else if tok != tokenString {
 			return NewParseError("Expected object property name or '}' not " + tok.String())
 		} else {
-			key = keyb
+			// get the appropriate prop
+			// we do this now, because ReadToken will invalidate keyb
+			propIndex, prop = p.getProp(keyb[1 : len(keyb)-1])
+			if prop != nil {
+				propPath = fmt.Sprintf("%s%s", path, keyb[1:len(keyb)-1])
+			}
 		}
 
 		// read the ':'
-		if tok, _, err = s.ReadToken(); tok == tokenError {
+		if tok, _, err := s.ReadToken(); tok == tokenError {
 			return err
 		} else if tok != tokenPropSep {
 			return NewParseError("Expected ':' not " + tok.String())
 		}
 
-		// get the appropriate prop
-		propIndex, prop := p.getProp(key[1 : len(key)-1])
 		if prop == nil {
 			if err := s.SkipValue(); err != nil {
 				return err
@@ -260,7 +265,6 @@ func (p *StructParser) Parse(path string, s *Scanner, v interface{}) error {
 			}
 
 			// parse the value
-			propPath := fmt.Sprintf("%s%s", path, key[1:len(key)-1])
 			if err := prop.schema.Parse(propPath, s, propval.Addr().Interface()); err != nil {
 				if verr, ok := err.(ValidationError); ok {
 					errs = errs.AddMany(verr)
