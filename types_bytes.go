@@ -44,8 +44,6 @@ func (p *ByteSliceParser) Parse(path string, s *Scanner, v interface{}) error {
 			return errs.Add(path, "Invalid string")
 		}
 
-		*bdest = buff
-
 		// validate the contents
 		for _, v := range p.vs {
 			if err := v.ValidateBytes(*bdest); err != nil {
@@ -55,9 +53,9 @@ func (p *ByteSliceParser) Parse(path string, s *Scanner, v interface{}) error {
 
 		if len(errs) > 0 {
 			return errs
-		} else {
-			return nil
 		}
+
+		*bdest = buff
 	}
 
 	return nil
