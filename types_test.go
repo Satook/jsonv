@@ -6,6 +6,7 @@ import (
 	"io"
 	"reflect"
 	"testing"
+	"time"
 )
 
 type EOFReader struct {
@@ -20,6 +21,10 @@ type ErrorReader struct {
 
 func (r *ErrorReader) Read(p []byte) (int, error) {
 	return 0, fmt.Errorf("File is corrupt")
+}
+
+func mkDate(y, m, d int) time.Time {
+	return time.Date(y, time.Month(m), d, 0, 0, 0, 0, time.UTC)
 }
 
 func tryParse(t SchemaType, json string, dest interface{}, want interface{}) error {
@@ -86,6 +91,8 @@ func Test_SchemaTypeParse(t *testing.T) {
 		{String(), `"false"`, "false"},
 		{String(), `"Something with \n \\ "`, "Something with \n \\ "},
 		{String(), `"Unicode!! \u2318"`, "Unicode!! \u2318"},
+
+		{Date(), `"2015-05-21"`, mkDate(2015, 5, 21)},
 
 		{Bytes(), `"false"`, []byte("false")},
 		{Bytes(), `"Something with \n \\ "`, []byte("Something with \n \\ ")},
