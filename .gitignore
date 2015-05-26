@@ -3,6 +3,7 @@
 *.log
 *.sqlite
 *.out
+*.test
 
 # vim edit files
 .*.swo
