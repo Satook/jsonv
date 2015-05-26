@@ -8,7 +8,7 @@ import (
 	"unicode/utf8"
 )
 
-const READ_LEN = 512
+const READ_LEN = 256
 const TOK_TRUE = "true"
 const TOK_FALSE = "false"
 const TOK_NULL = "null"
@@ -460,11 +460,7 @@ func (s *Scanner) fillBuffer() error {
 			s.buf = s.buf[0:rest]
 		} else {
 			// need a bigger buffer
-			newCap := 2 * cap(s.buf)
-			if newCap < READ_LEN*4 {
-				newCap = READ_LEN * 4
-			}
-			newBuf := make([]byte, used, newCap)
+			newBuf := make([]byte, used, 2*cap(s.buf)+READ_LEN)
 			copy(newBuf, s.buf[s.roff:])
 			s.buf = newBuf
 		}
