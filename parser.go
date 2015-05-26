@@ -117,7 +117,12 @@ func (p *ValidatingParser) Parse(r io.Reader, v interface{}) error {
 
 	s := NewScanner(r)
 
-	if err := p.schema.Parse("/", s, v); err != nil {
+	// the base pather
+	path := func() string {
+		return "/"
+	}
+
+	if err := p.schema.Parse(path, s, v); err != nil {
 		if verr, ok := err.(ValidationError); ok {
 			return verr
 		} else if perr, ok := err.(*ParseError); ok {

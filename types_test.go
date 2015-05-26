@@ -37,7 +37,7 @@ func tryParse(t SchemaType, json string, dest interface{}, want interface{}) err
 		}
 	}
 
-	if err := t.Parse("/", s, dest); err != nil {
+	if err := t.Parse(func() string { return "/" }, s, dest); err != nil {
 		return err
 	}
 
@@ -182,6 +182,10 @@ func Test_StructSlideLeft(t *testing.T) {
 }
 
 func Test_SchemaTypeParseErrors(t *testing.T) {
+	path := func() string {
+		return "/"
+	}
+
 	// each case provides data that will fail validation
 	cases := []struct {
 		t    SchemaType
@@ -205,13 +209,13 @@ func Test_SchemaTypeParseErrors(t *testing.T) {
 
 		// see if it handles unexpected EOF correctly
 		s := NewScanner(&EOFReader{})
-		if err := c.t.Parse("", s, c.dest); err != io.EOF {
+		if err := c.t.Parse(path, s, c.dest); err != io.EOF {
 			t.Errorf("Case %d EOF: Got non-EOF error %v", i, err)
 		}
 
 		// see if it handles random shitty error correctly
 		s = NewScanner(&ErrorReader{})
-		if err := c.t.Parse("", s, c.dest); err == nil {
+		if err := c.t.Parse(path, s, c.dest); err == nil {
 			t.Errorf("Case %d RandomError: Didn't get any error", i)
 		} else if _, ok := err.(ValidationError); ok {
 			t.Errorf("Case %d RandomError: Got validation error %v, want IO error", i, err)

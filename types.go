@@ -4,6 +4,10 @@ import (
 	"reflect"
 )
 
+// Used to avoid expensive pathing string formatting when it's needed 99.9999%
+// of the time
+type Pather func() string
+
 /*
 Used by Parser for parsing and validation of JSON types.
 
@@ -16,7 +20,7 @@ implementation should return a ValidationError, otherwise any other error type
 will be collected up with all errors accumulated so far and parsing stopped.
 */
 type SchemaType interface {
-	Parse(string, *Scanner, interface{}) error
+	Parse(Pather, *Scanner, interface{}) error
 }
 
 /*

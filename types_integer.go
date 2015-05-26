@@ -26,7 +26,7 @@ func (p *IntegerParser) Prepare(t reflect.Type) error {
 	return nil
 }
 
-func (p *IntegerParser) Parse(path string, s *Scanner, v interface{}) error {
+func (p *IntegerParser) Parse(path Pather, s *Scanner, v interface{}) error {
 	tok, buf, err := s.ReadToken()
 	if tok == tokenError {
 		return err
@@ -38,14 +38,14 @@ func (p *IntegerParser) Parse(path string, s *Scanner, v interface{}) error {
 
 	tv, err := strconv.ParseInt(string(buf), 10, 64)
 	if err != nil {
-		errs = errs.Add(path, err.Error())
+		errs = errs.Add(path(), err.Error())
 		return errs
 	}
 
 	// check the value
 	for _, v := range p.vs {
 		if err := v.ValidateInteger(tv); err != nil {
-			errs = errs.Add(path, err.Error())
+			errs = errs.Add(path(), err.Error())
 		}
 	}
 	if len(errs) > 0 {

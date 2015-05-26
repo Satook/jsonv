@@ -34,7 +34,7 @@ func (p *SliceParser) Prepare(t reflect.Type) error {
 	return nil
 }
 
-func (p *SliceParser) Parse(path string, s *Scanner, v interface{}) error {
+func (p *SliceParser) Parse(path Pather, s *Scanner, v interface{}) error {
 	// check we have a ptr to a struct
 	ptrVal := reflect.ValueOf(v)
 	ptrType := ptrVal.Type()
@@ -71,6 +71,9 @@ func (p *SliceParser) Parse(path string, s *Scanner, v interface{}) error {
 
 	// now read val then ','|']'
 	i := 0
+	itemPath := func() string {
+		return fmt.Sprintf("%s%d/", path(), i)
+	}
 	for !finished {
 		// next up must be a value
 		// Grow the slice if necessary
@@ -89,7 +92,6 @@ func (p *SliceParser) Parse(path string, s *Scanner, v interface{}) error {
 
 		// read in the value
 		itemPtr := val.Index(i).Addr().Interface()
-		itemPath := fmt.Sprintf("%s%d/", path, i)
 		if err := p.schema.Parse(itemPath, s, itemPtr); err != nil {
 			if verr, ok := err.(ValidationError); ok {
 				errs = errs.AddMany(verr)
@@ -115,7 +117,7 @@ func (p *SliceParser) Parse(path string, s *Scanner, v interface{}) error {
 	// validate the contents
 	for _, v := range p.vs {
 		if err := v.ValidateSlice(val); err != nil {
-			errs = errs.Add(path, err.Error())
+			errs = errs.Add(path(), err.Error())
 		}
 	}
 	if len(errs) > 0 {

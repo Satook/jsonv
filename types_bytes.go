@@ -26,28 +26,28 @@ func (p *ByteSliceParser) Prepare(t reflect.Type) error {
 	return nil
 }
 
-func (p *ByteSliceParser) Parse(path string, s *Scanner, v interface{}) error {
+func (p *ByteSliceParser) Parse(path Pather, s *Scanner, v interface{}) error {
 	tok, buf, err := s.ReadToken()
 	if tok == tokenError {
 		return err
 	} else if tok != tokenString {
-		return NewSingleVErr(path, fmt.Sprintf(ERROR_INVALID_STRING, string(buf)))
+		return NewSingleVErr(path(), fmt.Sprintf(ERROR_INVALID_STRING, string(buf)))
 	}
 
 	if bdest, ok := v.(*[]byte); !ok {
-		return fmt.Errorf(ERROR_BAD_BYTE_DEST, reflect.TypeOf(v), path)
+		return fmt.Errorf(ERROR_BAD_BYTE_DEST, reflect.TypeOf(v), path())
 	} else {
 		var errs ValidationError
 
 		buff, ok := UnquoteBytes(buf)
 		if !ok {
-			return errs.Add(path, "Invalid string")
+			return errs.Add(path(), "Invalid string")
 		}
 
 		// validate the contents
 		for _, v := range p.vs {
 			if err := v.ValidateBytes(buff); err != nil {
-				errs = errs.Add(path, err.Error())
+				errs = errs.Add(path(), err.Error())
 			}
 		}
 
@@ -83,16 +83,16 @@ func (p *RawByteSliceParser) Prepare(t reflect.Type) error {
 	return nil
 }
 
-func (p *RawByteSliceParser) Parse(path string, s *Scanner, v interface{}) error {
+func (p *RawByteSliceParser) Parse(path Pather, s *Scanner, v interface{}) error {
 	tok, buf, err := s.ReadToken()
 	if tok == tokenError {
 		return err
 	} else if tok != tokenString {
-		return NewSingleVErr(path, fmt.Sprintf(ERROR_INVALID_STRING, string(buf)))
+		return NewSingleVErr(path(), fmt.Sprintf(ERROR_INVALID_STRING, string(buf)))
 	}
 
 	if bdest, ok := v.(*[]byte); !ok {
-		return fmt.Errorf(ERROR_BAD_BYTE_DEST, reflect.TypeOf(v), path)
+		return fmt.Errorf(ERROR_BAD_BYTE_DEST, reflect.TypeOf(v), path())
 	} else {
 		// scanner owns buf, so we need to make a copy
 		*bdest = make([]byte, len(buf)-2)

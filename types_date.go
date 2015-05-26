@@ -38,7 +38,7 @@ func (p *DateParser) Prepare(t reflect.Type) error {
 	return nil
 }
 
-func (p *DateParser) Parse(path string, s *Scanner, v interface{}) error {
+func (p *DateParser) Parse(path Pather, s *Scanner, v interface{}) error {
 	tok, buf, err := s.ReadToken()
 	if tok == tokenError {
 		return err
@@ -47,20 +47,20 @@ func (p *DateParser) Parse(path string, s *Scanner, v interface{}) error {
 	}
 
 	if dest, ok := v.(*time.Time); !ok {
-		return fmt.Errorf(ERROR_BAD_DATE_DEST, reflect.TypeOf(v), path)
+		return fmt.Errorf(ERROR_BAD_DATE_DEST, reflect.TypeOf(v), path())
 	} else {
 		var errs ValidationError
 
 		val, err := time.Parse(date_fmt, string(buf))
 		if err != nil {
-			errs = errs.Add(path, err.Error())
+			errs = errs.Add(path(), err.Error())
 			return errs
 		}
 
 		// validate the value
 		for _, v := range p.vs {
 			if err := v.ValidateDate(val); err != nil {
-				errs = errs.Add(path, err.Error())
+				errs = errs.Add(path(), err.Error())
 			}
 		}
 		if len(errs) > 0 {

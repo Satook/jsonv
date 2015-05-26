@@ -28,23 +28,23 @@ func (p *StringParser) Prepare(t reflect.Type) error {
 	return nil
 }
 
-func (p *StringParser) Parse(path string, s *Scanner, v interface{}) error {
+func (p *StringParser) Parse(path Pather, s *Scanner, v interface{}) error {
 	tok, buf, err := s.ReadToken()
 	if tok == tokenError {
 		return err
 	} else if tok != tokenString {
-		return NewSingleVErr(path, fmt.Sprintf(ERROR_INVALID_STRING, string(buf)))
+		return NewSingleVErr(path(), fmt.Sprintf(ERROR_INVALID_STRING, string(buf)))
 	}
 
 	if ss, ok := v.(*string); !ok {
-		return fmt.Errorf(ERROR_BAD_STRING_DEST, reflect.TypeOf(v), path)
+		return fmt.Errorf(ERROR_BAD_STRING_DEST, reflect.TypeOf(v), path())
 	} else {
 		// now check for validation errors
 		var errs ValidationError
 
 		s, ok := Unquote(buf)
 		if !ok {
-			return errs.Add(path, "Invalid string")
+			return errs.Add(path(), "Invalid string")
 		}
 
 		*ss = s
@@ -52,7 +52,7 @@ func (p *StringParser) Parse(path string, s *Scanner, v interface{}) error {
 		// validate the contents
 		for _, v := range p.vs {
 			if err := v.ValidateString(*ss); err != nil {
-				errs = errs.Add(path, err.Error())
+				errs = errs.Add(path(), err.Error())
 			}
 		}
 

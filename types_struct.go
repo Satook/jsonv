@@ -193,7 +193,7 @@ func (p *StructParser) getProp(name []byte) (int, *StructPropInfo) {
 /*
 Won't allocate the struct, but will allocate fields if needed.
 */
-func (p *StructParser) Parse(path string, s *Scanner, v interface{}) error {
+func (p *StructParser) Parse(path Pather, s *Scanner, v interface{}) error {
 	// check we have a ptr to a struct
 	ptrVal := reflect.ValueOf(v)
 	ptrType := ptrVal.Type()
@@ -221,7 +221,9 @@ func (p *StructParser) Parse(path string, s *Scanner, v interface{}) error {
 	// reused to reference the prop
 	var prop *StructPropInfo
 	var propIndex int
-	var propPath string
+	propPath := func() string {
+		return fmt.Sprintf("%s%s", path(), prop.f.name)
+	}
 
 	for {
 		// read the key, or '}'
@@ -236,7 +238,6 @@ func (p *StructParser) Parse(path string, s *Scanner, v interface{}) error {
 			// we do this now, because ReadToken will invalidate keyb
 			propIndex, prop = p.getProp(keyb[1 : len(keyb)-1])
 			if prop != nil {
-				propPath = fmt.Sprintf("%s%s", path, keyb[1:len(keyb)-1])
 			}
 		}
 
@@ -313,7 +314,7 @@ func (p *StructParser) Parse(path string, s *Scanner, v interface{}) error {
 			// now set it
 			propval.Set(prop.def)
 		} else if prop.required {
-			errs = errs.Add(path+p.props[i].f.name, ERROR_PROP_REQUIRED)
+			errs = errs.Add(path()+p.props[i].f.name, ERROR_PROP_REQUIRED)
 		}
 	}
 
