@@ -49,11 +49,11 @@ func (p *DateParser) Parse(path Pather, s *Scanner, v interface{}) error {
 	if tok == tokenError {
 		return err
 	} else if tok != tokenString {
-		return NewParseError(fmt.Sprintf(ERROR_INVALID_DATE, string(buf)))
+		return NewParseError(ERROR_INVALID_DATE, string(buf))
 	}
 
 	if dest, ok := v.(*time.Time); !ok {
-		return fmt.Errorf(ERROR_BAD_DATE_DEST, reflect.TypeOf(v), path())
+		return NewParseError(ERROR_BAD_DATE_DEST, reflect.TypeOf(v), path())
 	} else {
 		var errs ValidationError
 

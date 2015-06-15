@@ -1,6 +1,7 @@
 package jsonv
 
 import (
+	"fmt"
 	"io"
 	"strconv"
 	"unicode"
@@ -13,12 +14,22 @@ const TOK_TRUE = "true"
 const TOK_FALSE = "false"
 const TOK_NULL = "null"
 
+/*
+Represents an error in the input stream that renders it unparsable, i.e. not
+valid JSON.
+
+This should not be used for errors where parsing can continue.
+*/
 type ParseError struct {
 	e string
 }
 
-func NewParseError(e string) error {
-	return &ParseError{e}
+func NewParseError(e string, args ...interface{}) error {
+	if len(args) == 0 {
+		return &ParseError{e}
+	} else {
+		return &ParseError{fmt.Sprintf(e, args...)}
+	}
 }
 
 func (p *ParseError) Error() string {

@@ -42,17 +42,16 @@ Any field that is a Pointer is an optional JSON property. Non-pointer
 fields are mandatory JSON properties. Validators are only invoked on
 properties that are present.
 
-Unexpected fields will result in a ValidationError being pushed out.
+Unexpected/unknown fields will be ignored, and their value skipped over.
 
 Properties are mapped to struct fields in the same way the inbuilt
 json.Unmarshall, i.e. via a depth-first mapping of, potentially overriden via
 tags, field names into a flat namespace on a last in wins basis. So embedded
 structs can have their fields hidden by the structs they're embedded within.
 
-Note: Only exported fields are touched.
+Note: Only exported fields are considered.
 
-For example, the following struct will be considered to have 1 mandatory field
-"Name":
+For example, the following struct will be considered to have 1 field, "Name":
 
 	type Person struct {
 		Name string
@@ -64,7 +63,7 @@ As would this:
 		Fullname string `json:"Name"`
 	}
 
-In this example, only Person.OuterName would be touched by the parser:
+In this example, only Person.OuterName would be considered by the parser:
 
 	type InnerPerson struct {
 		InnerName string `json:"Name"`
@@ -85,13 +84,57 @@ Person.OtherName field would be used by the parser:
 		Name string
 	}
 
+Note: The above field visibility/naming rules decide the list of available
+fields for a given struct type. The mapping of parser type->Field is established
+via the list of StructPropInfo objects that are handed to the Struct() function.
+
+This list of props defines the parsing and validation rules that will be used by
+the JSON parser for this type. Any field that is present on the struct but not
+present in the props list, will be ignored and left untouched by the Parser.
 */
 type StructParser struct {
 	props []StructPropInfo
 }
 
+/*
+Give it each of the properties you want to parse into struct fields.
+
+For example:
+
+Given this type
+type Person struct {
+	DBid int64
+	Name string
+	Age int
+	Occupation *string
+}
+
+and this Parser
+
+Struct(
+	Prop("Name", String(MinLen(1), MaxLen(255))),
+	PropWithDefault("Age", Integer(MinI(0)), -1),
+	Prop("Occupation", String(MinLen(1), MaxLen(255))),
+)
+
+ - The Name property is mandatory, and must have a length between 1 and 255
+   characters (inclusive)
+ - The Age property is optional. When provded, its value must be 0 or greater.
+   When not provided, it will be assigned a value of -1.
+ - The Occupation property is optional (because it's a pointer field). Pointer
+   fields are left untouched when a value is not provided. If provided, the
+   value must be a string between 1 and 255 characters long.
+
+This example shows how pointer vs non-pointer fields are handled and also
+demonstrates the difference between a field with a default value and a truely
+optional field. The last thing to note is that default values are not validated
+by the validation rules of the Parsing sub-type. As such, default values can be
+a value that won't be allowed to be explicitely set. This is sometimes
+preferable to using a Pointer, as the field can be used without having to
+dereference and for writing to a DB, a nil is obviously different to a default
+value.
+*/
 func Struct(props ...StructPropInfo) *StructParser {
-	// fill in the
 	return &StructParser{props}
 }
 

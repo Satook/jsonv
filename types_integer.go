@@ -39,7 +39,7 @@ func (p *IntegerParser) Parse(path Pather, s *Scanner, v interface{}) error {
 	if tok == tokenError {
 		return err
 	} else if tok != tokenNumber {
-		return NewParseError(fmt.Sprintf(ERROR_INVALID_INT, string(buf)))
+		return NewParseError(ERROR_INVALID_INT, string(buf))
 	}
 
 	var errs ValidationError
@@ -65,7 +65,7 @@ func (p *IntegerParser) Parse(path Pather, s *Scanner, v interface{}) error {
 	// now assign the value with whatever precision we can
 	switch t := v.(type) {
 	default:
-		return fmt.Errorf(ERROR_BAD_INT_DEST, reflect.TypeOf(v))
+		return NewParseError(ERROR_BAD_INT_DEST, reflect.TypeOf(v))
 	case *int:
 		*t = int(tv)
 	case *int8:

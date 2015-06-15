@@ -199,6 +199,9 @@ func Test_SchemaTypeParseErrors(t *testing.T) {
 
 		{Boolean(), "twwrue", new(bool)},
 		{Boolean(), "1", new(bool)},
+
+		{Date(), "20210890", new(time.Time)},
+		{Date(), "true", new(time.Time)},
 	}
 
 	for i, c := range cases {
@@ -239,6 +242,8 @@ func Test_SchemaTypeValidationErrors(t *testing.T) {
 		{Integer(MaxI(3)), "5", new(int64), []string{"/"}},
 
 		{String(MaxLen(2)), `"TOo long"`, new(string), []string{"/"}},
+
+		{Date(), `"4 Jan 2021"`, new(time.Time), []string{"/"}},
 
 		// check the slice validators
 		{Slice(Integer(), MinItems(2)), "[]", new([]int64), []string{"/"}},
