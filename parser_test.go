@@ -63,7 +63,7 @@ func Test_parserBadTypes(t *testing.T) {
 		t interface{}
 	}{
 		// straight type checks
-		{Integer(), new(int8)},
+		{Integer(), new(string)},
 		{Integer(), new(float64)},
 		{Boolean(), new(float64)},
 		{String(), new(float64)},

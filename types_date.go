@@ -17,6 +17,12 @@ type DateValidator interface {
 	ValidateDate(time.Time) error
 }
 
+type DateValidatorFunc func(time.Time) error
+
+func (f DateValidatorFunc) ValidateDate(t time.Time) error {
+	return f(t)
+}
+
 /*
 Parses JSON strings value and stores it in a Go time.Time.
 

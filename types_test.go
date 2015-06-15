@@ -232,6 +232,9 @@ func Test_SchemaTypeValidationErrors(t *testing.T) {
 		wantPaths []string
 	}{
 		{Integer(), "5.2", new(int64), []string{"/"}},
+		{Integer(), "512", new(int8), []string{"/"}},
+		{Integer(), "70000", new(int16), []string{"/"}},
+		{Integer(), "4000000000", new(int32), []string{"/"}},
 		{Integer(MinI(7)), "5", new(int64), []string{"/"}},
 		{Integer(MaxI(3)), "5", new(int64), []string{"/"}},
 
