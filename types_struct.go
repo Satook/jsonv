@@ -311,8 +311,11 @@ func (p *StructParser) Parse(path Pather, s *Scanner, v interface{}) error {
 			// parse the value
 			if err := prop.schema.Parse(propPath, s, propval.Addr().Interface()); err != nil {
 				if verr, ok := err.(ValidationError); ok {
+					// just a validation error, was valid JSON at least collect
+					// any more validation errors that we can
 					errs = errs.AddMany(verr)
 				} else {
+					// an error that means we can't recover, so bail right now.
 					return err
 				}
 			}
