@@ -2,14 +2,15 @@ package jsonv
 
 const (
 	// messages for bad destination types
-	ERROR_BAD_INT_DEST    = "Cannot assign integer to variable of type %v, path %v"
-	ERROR_BAD_FLOAT_DEST  = "Cannot assign float to variable of type %v, path %v"
-	ERROR_BAD_STRING_DEST = "Cannot assign string to variable of type %v, path %v"
-	ERROR_BAD_DATE_DEST   = "Cannot assign date to variable of type %v, path %v"
-	ERROR_BAD_BYTE_DEST   = "Cannot assign []byte to variable of type %v, path %v"
-	ERROR_BAD_BOOL_DEST   = "Cannot assign boolean to variable of type %v, path %v"
-	ERROR_BAD_OBJ_DEST    = "Must be a non-nil ptr to a struct, not %v"
-	ERROR_BAD_SLICE_DEST  = "Must be a non-nil ptr to a slice, not %v"
+	ERROR_BAD_INT_DEST       = "Cannot assign integer to variable of type %v, path %v"
+	ERROR_BAD_FLOAT_DEST     = "Cannot assign float to variable of type %v, path %v"
+	ERROR_BAD_STRING_DEST    = "Cannot assign string to variable of type %v, path %v"
+	ERROR_BAD_DATE_DEST      = "Cannot assign date to variable of type %v, path %v"
+	ERROR_BAD_BYTE_DEST      = "Cannot assign []byte to variable of type %v, path %v"
+	ERROR_BAD_BOOL_DEST      = "Cannot assign boolean to variable of type %v, path %v"
+	ERROR_BAD_UNMARSHAL_DEST = "Cannot unmashal into variable of type %v, path %v"
+	ERROR_BAD_OBJ_DEST       = "Must be a non-nil ptr to a struct, not %v"
+	ERROR_BAD_SLICE_DEST     = "Must be a non-nil ptr to a slice, not %v"
 
 	ERROR_INVALID_STRING = "Expected a string, go %v"
 

@@ -2,6 +2,7 @@ package jsonv
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"reflect"
@@ -152,6 +153,10 @@ func Test_SchemaTypeParse(t *testing.T) {
 		),
 			`{"Fullname":"kjsadhlkfjdshalkhjdfsa","Mobile":"2309485702349857","Email":"laksdjfh@asdlkihfalsdkifhj","Password":"alksdjfghlaksdf","Captcha":"03AHJ_VutuNyz928BySmbXvafmtG90YdwZdYCTCN0FYLE2IWnzXlpqb1GVAVmggjrMQqXak0mQMZQK5JI5y-5kfZcImtTjFW3tizGPU-RyBgrZ2mLXtZplYGBdRjHA7WHVrKuD4rjtJtZ6DOnGxwceNDJCdeaJopGFujvDqxMADt-ovlWC9_vLVfvjo-y_1hO0Wdw_QbWzPqeKy0FLGN5pv-dTnmd9WcwN2EW54V8Y4RkPnEMWgnzlJIdzVNoFpkHysQ_jR_jE1FfPQt5ZSbQw3Ey3p1dPSFp_ee7vSyk9QMyIqbgRXhB5kOXTCil87Oq6Fb76Y8cBt-hMzO8c8uk_aoWS0QdOTGvMtx1blQPECsCbAUjzuKHilH6beECyJzgA6nFQytQ2Ne1Dz1-y6ML6wg6ANeeAPjojbIo5xZGGXnY5ruzahIhsTZY"}`,
 			trainer{"03AHJ_VutuNyz928BySmbXvafmtG90YdwZdYCTCN0FYLE2IWnzXlpqb1GVAVmggjrMQqXak0mQMZQK5JI5y-5kfZcImtTjFW3tizGPU-RyBgrZ2mLXtZplYGBdRjHA7WHVrKuD4rjtJtZ6DOnGxwceNDJCdeaJopGFujvDqxMADt-ovlWC9_vLVfvjo-y_1hO0Wdw_QbWzPqeKy0FLGN5pv-dTnmd9WcwN2EW54V8Y4RkPnEMWgnzlJIdzVNoFpkHysQ_jR_jE1FfPQt5ZSbQw3Ey3p1dPSFp_ee7vSyk9QMyIqbgRXhB5kOXTCil87Oq6Fb76Y8cBt-hMzO8c8uk_aoWS0QdOTGvMtx1blQPECsCbAUjzuKHilH6beECyJzgA6nFQytQ2Ne1Dz1-y6ML6wg6ANeeAPjojbIo5xZGGXnY5ruzahIhsTZY", "kjsadhlkfjdshalkhjdfsa", "laksdjfh@asdlkihfalsdkifhj", "2309485702349857", "alksdjfghlaksdf"}},
+
+		{Unmarshaler(), `"2012-02-07T12:04:05Z"`, time.Date(2012, 02, 07, 12, 04, 05, 0, time.UTC)},
+		{Unmarshaler(), `"12568222asdasd-- - -"`, json.RawMessage(`"12568222asdasd-- - -"`)},
+		{Unmarshaler(), `172`, json.RawMessage(`172`)},
 	}
 
 	for i, c := range cases {
