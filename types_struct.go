@@ -251,9 +251,9 @@ func (p *StructParser) Parse(path Pather, s *Scanner, v interface{}) error {
 
 	// read the '{'
 	tok, _, err := s.ReadToken()
-	if tok == tokenError {
+	if tok == TokenError {
 		return err
-	} else if tok != tokenObjectBegin {
+	} else if tok != TokenObjectBegin {
 		return NewParseError("Expected '{' not " + tok.String())
 	}
 
@@ -270,11 +270,11 @@ func (p *StructParser) Parse(path Pather, s *Scanner, v interface{}) error {
 
 	for {
 		// read the key, or '}'
-		if tok, keyb, err := s.ReadToken(); tok == tokenError {
+		if tok, keyb, err := s.ReadToken(); tok == TokenError {
 			return err
-		} else if tok == tokenObjectEnd {
+		} else if tok == TokenObjectEnd {
 			break
-		} else if tok != tokenString {
+		} else if tok != TokenString {
 			return NewParseError("Expected object property name or '}' not " + tok.String())
 		} else {
 			// get the appropriate prop
@@ -285,9 +285,9 @@ func (p *StructParser) Parse(path Pather, s *Scanner, v interface{}) error {
 		}
 
 		// read the ':'
-		if tok, _, err := s.ReadToken(); tok == tokenError {
+		if tok, _, err := s.ReadToken(); tok == TokenError {
 			return err
-		} else if tok != tokenPropSep {
+		} else if tok != TokenPropSep {
 			return NewParseError("Expected ':' not " + tok.String())
 		}
 
@@ -325,11 +325,11 @@ func (p *StructParser) Parse(path Pather, s *Scanner, v interface{}) error {
 		}
 
 		// we want a , or a }
-		if tok, _, err := s.ReadToken(); tok == tokenError {
+		if tok, _, err := s.ReadToken(); tok == TokenError {
 			return err
-		} else if tok == tokenObjectEnd {
+		} else if tok == TokenObjectEnd {
 			break
-		} else if tok == tokenItemSep {
+		} else if tok == TokenItemSep {
 			// Note this a trailing ',' before the '}'
 			continue
 		} else {

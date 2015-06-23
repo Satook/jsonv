@@ -46,9 +46,9 @@ func (p *DateParser) Prepare(t reflect.Type) error {
 
 func (p *DateParser) Parse(path Pather, s *Scanner, v interface{}) error {
 	tok, buf, err := s.ReadToken()
-	if tok == tokenError {
+	if tok == TokenError {
 		return err
-	} else if tok != tokenString {
+	} else if tok != TokenString {
 		return NewParseError(ERROR_INVALID_DATE, string(buf))
 	}
 

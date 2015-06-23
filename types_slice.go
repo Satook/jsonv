@@ -49,9 +49,9 @@ func (p *SliceParser) Parse(path Pather, s *Scanner, v interface{}) error {
 
 	// read the '['
 	tok, _, err := s.ReadToken()
-	if tok == tokenError {
+	if tok == TokenError {
 		return err
-	} else if tok != tokenArrayBegin {
+	} else if tok != TokenArrayBegin {
 		return NewParseError("Expected '[' not " + tok.String())
 	}
 
@@ -60,7 +60,7 @@ func (p *SliceParser) Parse(path Pather, s *Scanner, v interface{}) error {
 	// see if we have at least 1 value
 	if tok, err := s.PeekToken(); err != nil {
 		return err
-	} else if tok == tokenArrayEnd {
+	} else if tok == TokenArrayEnd {
 		// actually consume it
 		s.ReadToken()
 		finished = true
@@ -103,11 +103,11 @@ func (p *SliceParser) Parse(path Pather, s *Scanner, v interface{}) error {
 		i++
 
 		// we want either a ',' or a ']'
-		if tok, _, err := s.ReadToken(); tok == tokenError {
+		if tok, _, err := s.ReadToken(); tok == TokenError {
 			return err
-		} else if tok == tokenArrayEnd {
+		} else if tok == TokenArrayEnd {
 			finished = true
-		} else if tok == tokenItemSep {
+		} else if tok == TokenItemSep {
 			continue
 		} else {
 			return NewParseError("Expected ',' or '[' not " + tok.String())

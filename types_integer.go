@@ -36,9 +36,9 @@ func (p *IntegerParser) Prepare(t reflect.Type) error {
 
 func (p *IntegerParser) Parse(path Pather, s *Scanner, v interface{}) error {
 	tok, buf, err := s.ReadToken()
-	if tok == tokenError {
+	if tok == TokenError {
 		return err
-	} else if tok != tokenNumber {
+	} else if tok != TokenNumber {
 		return NewParseError(ERROR_INVALID_INT, string(buf))
 	}
 

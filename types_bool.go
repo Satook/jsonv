@@ -29,9 +29,9 @@ func (p *BooleanParser) Prepare(t reflect.Type) error {
 func (p *BooleanParser) Parse(path Pather, s *Scanner, v interface{}) error {
 	tok, buf, err := s.ReadToken()
 	// wasn't the correct type
-	if tok == tokenError {
+	if tok == TokenError {
 		return err
-	} else if tok != tokenTrue && tok != tokenFalse {
+	} else if tok != TokenTrue && tok != TokenFalse {
 		return NewSingleVErr(path(), fmt.Sprintf(ERROR_INVALID_BOOL, string(buf)))
 	}
 

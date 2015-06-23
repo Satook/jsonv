@@ -13,39 +13,39 @@ func Test_scannerTokens(t *testing.T) {
 		tok  TokenType
 		val  []byte
 	}{
-		{"{", tokenObjectBegin, []byte("{")},
-		{" {", tokenObjectBegin, []byte("{")},
-		{"\t{", tokenObjectBegin, []byte("{")},
-		{"\n{", tokenObjectBegin, []byte("{")},
-		{"\r{", tokenObjectBegin, []byte("{")},
-		{" \t\n\n\r\t   { \t\t", tokenObjectBegin, []byte("{")},
-		{"}", tokenObjectEnd, []byte("}")},
-		{"[", tokenArrayBegin, []byte("[")},
-		{"]", tokenArrayEnd, []byte("]")},
-		{`  , `, tokenItemSep, []byte(",")},
-		{`  :, `, tokenPropSep, []byte(":")},
-		{"true", tokenTrue, []byte("true")},
-		{"false,", tokenFalse, []byte("false")},
-		{"null", tokenNull, []byte("null")},
-		{"0 ", tokenNumber, []byte("0")},
-		{"5 ", tokenNumber, []byte("5")},
-		{"-5,", tokenNumber, []byte("-5")},
-		{"0.1,", tokenNumber, []byte("0.1")},
-		{"-0.1 ", tokenNumber, []byte("-0.1")},
-		{"0.123 ", tokenNumber, []byte("0.123")},
-		{"1234567890  ", tokenNumber, []byte("1234567890")},
-		{"2e+12", tokenNumber, []byte("2e+12")},
-		{"2e-12", tokenNumber, []byte("2e-12")},
-		{"2e12", tokenNumber, []byte("2e12")},
-		{"2.3e+9", tokenNumber, []byte("2.3e+9")},
-		{"0.2e-5", tokenNumber, []byte("0.2e-5")},
-		{"0.2e5", tokenNumber, []byte("0.2e5")},
-		{",", tokenItemSep, []byte(",")},
-		{`""`, tokenString, []byte(`""`)},
-		{`"Abc"`, tokenString, []byte(`"Abc"`)},
-		{`"A\"b\\c"`, tokenString, []byte(`"A\"b\\c"`)},
-		{`"\"A\"b\\c"`, tokenString, []byte(`"\"A\"b\\c"`)},
-		{`  "Abc"  `, tokenString, []byte(`"Abc"`)},
+		{"{", TokenObjectBegin, []byte("{")},
+		{" {", TokenObjectBegin, []byte("{")},
+		{"\t{", TokenObjectBegin, []byte("{")},
+		{"\n{", TokenObjectBegin, []byte("{")},
+		{"\r{", TokenObjectBegin, []byte("{")},
+		{" \t\n\n\r\t   { \t\t", TokenObjectBegin, []byte("{")},
+		{"}", TokenObjectEnd, []byte("}")},
+		{"[", TokenArrayBegin, []byte("[")},
+		{"]", TokenArrayEnd, []byte("]")},
+		{`  , `, TokenItemSep, []byte(",")},
+		{`  :, `, TokenPropSep, []byte(":")},
+		{"true", TokenTrue, []byte("true")},
+		{"false,", TokenFalse, []byte("false")},
+		{"null", TokenNull, []byte("null")},
+		{"0 ", TokenNumber, []byte("0")},
+		{"5 ", TokenNumber, []byte("5")},
+		{"-5,", TokenNumber, []byte("-5")},
+		{"0.1,", TokenNumber, []byte("0.1")},
+		{"-0.1 ", TokenNumber, []byte("-0.1")},
+		{"0.123 ", TokenNumber, []byte("0.123")},
+		{"1234567890  ", TokenNumber, []byte("1234567890")},
+		{"2e+12", TokenNumber, []byte("2e+12")},
+		{"2e-12", TokenNumber, []byte("2e-12")},
+		{"2e12", TokenNumber, []byte("2e12")},
+		{"2.3e+9", TokenNumber, []byte("2.3e+9")},
+		{"0.2e-5", TokenNumber, []byte("0.2e-5")},
+		{"0.2e5", TokenNumber, []byte("0.2e5")},
+		{",", TokenItemSep, []byte(",")},
+		{`""`, TokenString, []byte(`""`)},
+		{`"Abc"`, TokenString, []byte(`"Abc"`)},
+		{`"A\"b\\c"`, TokenString, []byte(`"A\"b\\c"`)},
+		{`"\"A\"b\\c"`, TokenString, []byte(`"\"A\"b\\c"`)},
+		{`  "Abc"  `, TokenString, []byte(`"Abc"`)},
 	}
 
 	for i, c := range cases {
@@ -88,8 +88,8 @@ func Test_scannerSkipValue(t *testing.T) {
 		`{"fake": {"diff": "val", "age": 42, "sub": {"has": null}}, "actual": "test"}`,
 	}
 
-	want1 := []TokenType{tokenObjectBegin, tokenString, tokenPropSep}
-	want2 := []TokenType{tokenItemSep, tokenString, tokenPropSep, tokenString, tokenObjectEnd}
+	want1 := []TokenType{TokenObjectBegin, TokenString, TokenPropSep}
+	want2 := []TokenType{TokenItemSep, TokenString, TokenPropSep, TokenString, TokenObjectEnd}
 
 	for i, json := range cases {
 		t.Logf("Starting case %d: %s\n", i, json)
@@ -142,12 +142,12 @@ func Test_scannerLargeSource(t *testing.T) {
 	data[0] = '['
 	data[len(data)-1] = ']'
 
-	wantToks := []TokenType{tokenObjectBegin,
-		tokenString, tokenPropSep, tokenString, tokenItemSep,
-		tokenString, tokenPropSep, tokenNumber, tokenItemSep,
-		tokenString, tokenPropSep, tokenArrayBegin,
-		tokenString, tokenItemSep, tokenString, tokenItemSep, tokenString,
-		tokenArrayEnd, tokenObjectEnd, tokenItemSep,
+	wantToks := []TokenType{TokenObjectBegin,
+		TokenString, TokenPropSep, TokenString, TokenItemSep,
+		TokenString, TokenPropSep, TokenNumber, TokenItemSep,
+		TokenString, TokenPropSep, TokenArrayBegin,
+		TokenString, TokenItemSep, TokenString, TokenItemSep, TokenString,
+		TokenArrayEnd, TokenObjectEnd, TokenItemSep,
 	}
 	lenWantToks := len(wantToks)
 
@@ -159,13 +159,13 @@ func Test_scannerLargeSource(t *testing.T) {
 
 	// read array start
 	tok, _, err := s.ReadToken()
-	if tok != tokenArrayBegin {
-		t.Fatalf("Got %v, err %v. Want %v", tok, err, tokenArrayBegin)
+	if tok != TokenArrayBegin {
+		t.Fatalf("Got %v, err %v. Want %v", tok, err, TokenArrayBegin)
 	}
 
 	for i := 0; i < toksToRead; i++ {
 		got, buf, err := s.ReadToken()
-		if got == tokenError {
+		if got == TokenError {
 			t.Fatal(err)
 		}
 
@@ -178,7 +178,7 @@ func Test_scannerLargeSource(t *testing.T) {
 	}
 
 	// read the array end
-	if tok, _, err := s.ReadToken(); tok != tokenArrayEnd {
-		t.Fatalf("Got %v, err %v. Want %v", tok, err, tokenArrayEnd)
+	if tok, _, err := s.ReadToken(); tok != TokenArrayEnd {
+		t.Fatalf("Got %v, err %v. Want %v", tok, err, TokenArrayEnd)
 	}
 }

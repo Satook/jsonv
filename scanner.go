@@ -39,19 +39,19 @@ func (p *ParseError) Error() string {
 type TokenType int
 
 const (
-	tokenError TokenType = iota // an IO error (legit or EOF)
+	TokenError TokenType = iota // an IO error (legit or EOF)
 
-	tokenObjectBegin
-	tokenObjectEnd
-	tokenArrayBegin
-	tokenArrayEnd
-	tokenItemSep // a single ',' token for arrays and objects
-	tokenPropSep
-	tokenString
-	tokenNumber
-	tokenTrue
-	tokenFalse
-	tokenNull
+	TokenObjectBegin
+	TokenObjectEnd
+	TokenArrayBegin
+	TokenArrayEnd
+	TokenItemSep // a single ',' token for arrays and objects
+	TokenPropSep
+	TokenString
+	TokenNumber
+	TokenTrue
+	TokenFalse
+	TokenNull
 )
 
 /*
@@ -59,27 +59,27 @@ Nice text versions for error messages to clients.
 */
 func (t TokenType) String() string {
 	switch t {
-	case tokenObjectBegin:
+	case TokenObjectBegin:
 		return "{"
-	case tokenObjectEnd:
+	case TokenObjectEnd:
 		return "}"
-	case tokenArrayBegin:
+	case TokenArrayBegin:
 		return "["
-	case tokenArrayEnd:
+	case TokenArrayEnd:
 		return "]"
-	case tokenItemSep:
+	case TokenItemSep:
 		return ","
-	case tokenPropSep:
+	case TokenPropSep:
 		return ":"
-	case tokenString:
+	case TokenString:
 		return "string"
-	case tokenNumber:
+	case TokenNumber:
 		return "number"
-	case tokenTrue:
+	case TokenTrue:
 		return TOK_TRUE
-	case tokenFalse:
+	case TokenFalse:
 		return TOK_FALSE
-	case tokenNull:
+	case TokenNull:
 		return TOK_NULL
 	default:
 		return "Error"
@@ -131,7 +131,7 @@ Skips over a single value in the input.
 func (s *Scanner) SkipValue() error {
 	// read the first token
 	tok, _, err := s.ReadToken()
-	if tok == tokenError {
+	if tok == TokenError {
 		return err
 	}
 
@@ -142,11 +142,11 @@ func (s *Scanner) _skipValue(tok TokenType) error {
 	switch tok {
 	default:
 		return NewParseError("Expected JSON value, e.g. string, bool, etc.")
-	case tokenObjectBegin:
+	case TokenObjectBegin:
 		return s.skipObject()
-	case tokenArrayBegin:
+	case TokenArrayBegin:
 		return s.skipArray()
-	case tokenString, tokenNumber, tokenTrue, tokenFalse, tokenNull:
+	case TokenString, TokenNumber, TokenTrue, TokenFalse, TokenNull:
 		// aaaaand we're done
 		return nil
 	}
@@ -157,16 +157,16 @@ func (s *Scanner) skipObject() error {
 		// read the key, or '}'
 		if tok, _, err := s.ReadToken(); err != nil {
 			return err
-		} else if tok == tokenObjectEnd {
+		} else if tok == TokenObjectEnd {
 			break
-		} else if tok != tokenString {
+		} else if tok != TokenString {
 			return NewParseError("Expected string or '}', not " + tok.String())
 		}
 
 		// now read the ':'
 		if tok, _, err := s.ReadToken(); err != nil {
 			return err
-		} else if tok != tokenPropSep {
+		} else if tok != TokenPropSep {
 			return NewParseError("Expected ':' not " + tok.String())
 		}
 
@@ -177,9 +177,9 @@ func (s *Scanner) skipObject() error {
 
 		if tok, _, err := s.ReadToken(); err != nil {
 			return err
-		} else if tok == tokenItemSep {
+		} else if tok == TokenItemSep {
 			continue
-		} else if tok == tokenObjectEnd {
+		} else if tok == TokenObjectEnd {
 			break
 		} else {
 			return NewParseError("Expected ',' or '}', not " + tok.String())
@@ -193,7 +193,7 @@ func (s *Scanner) skipArray() error {
 	for {
 		if tok, _, err := s.ReadToken(); err != nil {
 			return err
-		} else if tok == tokenArrayEnd {
+		} else if tok == TokenArrayEnd {
 			break
 		} else if err := s._skipValue(tok); err != nil {
 			return err
@@ -203,9 +203,9 @@ func (s *Scanner) skipArray() error {
 		tok, _, err := s.ReadToken()
 		if err != nil {
 			return err
-		} else if tok == tokenItemSep {
+		} else if tok == TokenItemSep {
 			continue
-		} else if tok == tokenArrayEnd {
+		} else if tok == TokenArrayEnd {
 			break
 		} else {
 			return NewParseError("Expected ',' or ']', not " + tok.String())
@@ -216,7 +216,7 @@ func (s *Scanner) skipArray() error {
 }
 
 /*
-Reads forward to the next token, but only returns its type, leaves the read
+Reads forward to the next Token, but only returns its type, leaves the read
 cursor pointed at its first byte, unlike ReadToken which leaves the read cursor
 just past its last.
 */
@@ -228,36 +228,36 @@ func (s *Scanner) PeekToken() (TokenType, error) {
 
 	// have we run out of data?
 	if s.roff >= len(s.buf) {
-		return tokenError, s.rerr
+		return TokenError, s.rerr
 	}
 
 	// we only need the first character
-	tok := tokenError
+	tok := TokenError
 	switch s.buf[s.roff] {
 	case '{':
-		tok = tokenObjectBegin
+		tok = TokenObjectBegin
 	case '}':
-		tok = tokenObjectEnd
+		tok = TokenObjectEnd
 	case '[':
-		tok = tokenArrayBegin
+		tok = TokenArrayBegin
 	case ']':
-		tok = tokenArrayEnd
+		tok = TokenArrayEnd
 	case ',':
-		tok = tokenItemSep
+		tok = TokenItemSep
 	case ':':
-		tok = tokenPropSep
+		tok = TokenPropSep
 	case 't':
-		tok = tokenTrue
+		tok = TokenTrue
 	case 'f':
-		tok = tokenFalse
+		tok = TokenFalse
 	case 'n':
-		tok = tokenNull
+		tok = TokenNull
 	case '"':
-		tok = tokenString
+		tok = TokenString
 	case '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		tok = tokenNumber
+		tok = TokenNumber
 	default:
-		return tokenError, NewParseError("Invaid JSON")
+		return TokenError, NewParseError("Invaid JSON")
 	}
 
 	return tok, nil
@@ -285,28 +285,28 @@ func (s *Scanner) ReadToken() (TokenType, []byte, error) {
 
 	// have we run out of data?
 	if s.roff >= len(s.buf) {
-		return tokenError, s.buf[s.roff:], s.rerr
+		return TokenError, s.buf[s.roff:], s.rerr
 	}
 
-	// cover off single character token
-	tok := tokenError
+	// cover off single character Token
+	tok := TokenError
 	first := s.buf[s.roff]
 	switch first {
 	case '{':
-		tok = tokenObjectBegin
+		tok = TokenObjectBegin
 	case '}':
-		tok = tokenObjectEnd
+		tok = TokenObjectEnd
 	case '[':
-		tok = tokenArrayBegin
+		tok = TokenArrayBegin
 	case ']':
-		tok = tokenArrayEnd
+		tok = TokenArrayEnd
 	case ',':
-		tok = tokenItemSep
+		tok = TokenItemSep
 	case ':':
-		tok = tokenPropSep
+		tok = TokenPropSep
 	}
 	// return the single char token
-	if tok != tokenError {
+	if tok != TokenError {
 		buf := s.buf[s.roff : s.roff+1]
 		s.roff += 1
 		s.rcount += 1
@@ -317,17 +317,17 @@ func (s *Scanner) ReadToken() (TokenType, []byte, error) {
 	var lookFor string
 	switch first {
 	case 't':
-		tok = tokenTrue
+		tok = TokenTrue
 		lookFor = TOK_TRUE
 	case 'f':
-		tok = tokenFalse
+		tok = TokenFalse
 		lookFor = TOK_FALSE
 	case 'n':
-		tok = tokenNull
+		tok = TokenNull
 		lookFor = TOK_NULL
 	}
 	// read what we want, check it's correct, return it or a parse error
-	if tok != tokenError {
+	if tok != TokenError {
 		l := len(lookFor)
 		if err := s.atLeast(l); err == nil {
 			buf := s.buf[s.roff : s.roff+l]
@@ -337,7 +337,7 @@ func (s *Scanner) ReadToken() (TokenType, []byte, error) {
 				s.rcount += l
 				return tok, buf, nil
 			} else {
-				return tokenError, buf, NewParseError("Expected " + lookFor + ", not " + sbuf)
+				return TokenError, buf, NewParseError("Expected " + lookFor + ", not " + sbuf)
 			}
 		}
 	} else if first == '"' {
@@ -360,7 +360,7 @@ func (s *Scanner) ReadToken() (TokenType, []byte, error) {
 				// this char is escaped
 			} else if char == '"' {
 				// this is a non-escaped ", i.e. the end of the string
-				tok = tokenString
+				tok = TokenString
 				buf := s.buf[s.roff : s.roff+offset+1]
 				s.roff += len(buf)
 				s.rcount += len(buf)
@@ -387,7 +387,7 @@ func (s *Scanner) ReadToken() (TokenType, []byte, error) {
 			// push it through the machine
 			state, perr = state(s.buf[s.roff+offset])
 			if perr != nil {
-				return tokenError, s.buf[s.roff:], perr
+				return TokenError, s.buf[s.roff:], perr
 			} else if state == nil {
 				// finished
 				break
@@ -403,14 +403,14 @@ func (s *Scanner) ReadToken() (TokenType, []byte, error) {
 			buf := s.buf[s.roff : s.roff+offset]
 			s.roff += len(buf)
 			s.rcount += len(buf)
-			return tokenNumber, buf, nil
+			return TokenNumber, buf, nil
 		}
 	} else {
-		return tokenError, s.buf[s.roff:], NewParseError("Expected valid JSON")
+		return TokenError, s.buf[s.roff:], NewParseError("Expected valid JSON")
 	}
 
 	if s.rerr != nil {
-		return tokenError, s.buf[s.roff:], s.rerr
+		return TokenError, s.buf[s.roff:], s.rerr
 	} else {
 		panic("Didn't get any more data but didn't get an EOF")
 	}
