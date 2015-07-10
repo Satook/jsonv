@@ -62,7 +62,9 @@ func (p *SliceParser) Parse(path Pather, s *Scanner, v interface{}) error {
 		return err
 	} else if tok == TokenArrayEnd {
 		// actually consume it
-		s.ReadToken()
+		if _, _, err := s.ReadToken(); err != nil {
+			return err
+		}
 		finished = true
 	}
 
