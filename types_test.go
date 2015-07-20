@@ -96,6 +96,10 @@ func Test_SchemaTypeParse(t *testing.T) {
 
 		{Date(), `"2015-05-21"`, mkDate(2015, 5, 21)},
 
+		{Enum(Integer(), int64(1), int64(2)), "1", int64(1)},
+		{Enum(String(), "avail", "dud"), `"dud"`, "dud"},
+		{Enum(Boolean(), false), `false`, false},
+
 		{Bytes(), `"false"`, []byte("false")},
 		{Bytes(), `"Something with \n \\ "`, []byte("Something with \n \\ ")},
 		{Bytes(MinLen(5), MaxLen(500)), `"Something with \n \\ "`, []byte("Something with \n \\ ")},
