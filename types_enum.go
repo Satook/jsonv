@@ -16,7 +16,7 @@ recommended for both sanity and performance.
 type EnumParser struct {
 	schema      SchemaType    // how do we parse it
 	allowedVals []interface{} // what values are acceptable
-	invalidErr  error         // pre-built "value not valid" error
+	invalidMsg  string        // pre-built "value not valid" error
 }
 
 /*
@@ -34,7 +34,7 @@ func Enum(s SchemaType, vals ...interface{}) *EnumParser {
 		parts = append(parts, fmt.Sprint(v))
 	}
 
-	return &EnumParser{s, vals, fmt.Errorf("Must be one of: %s", strings.Join(parts, ","))}
+	return &EnumParser{s, vals, fmt.Sprintf("Must be one of: %s", strings.Join(parts, ","))}
 }
 
 func (p *EnumParser) Prepare(t reflect.Type) error {
@@ -74,5 +74,6 @@ func (p *EnumParser) Parse(path Pather, s *Scanner, v interface{}) error {
 		}
 	}
 
-	return p.invalidErr
+	var errs ValidationError
+	return errs.Add(path(), p.invalidMsg)
 }

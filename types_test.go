@@ -254,6 +254,10 @@ func Test_SchemaTypeValidationErrors(t *testing.T) {
 
 		{Date(), `"4 Jan 2021"`, new(time.Time), []string{"/"}},
 
+		{Enum(Integer(), int64(1), int64(2)), "3", new(int64), []string{"/"}},
+		{Enum(String(), "avail", "dud"), `"dude"`, new(string), []string{"/"}},
+		{Enum(Boolean(), false), `true`, new(bool), []string{"/"}},
+
 		// check the slice validators
 		{Slice(Integer(), MinItems(2)), "[]", new([]int64), []string{"/"}},
 		{Slice(Integer(), MinItems(2)), "[1]", new([]int64), []string{"/"}},
