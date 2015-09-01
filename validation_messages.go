@@ -28,10 +28,10 @@ const (
 	ERROR_MAX_LEN_STR   = "Must be no more than %d characters long"
 	ERROR_PATTERN_MATCH = "Must match regex pattern %v"
 
-	ERROR_MIN_LEN_ARR = "Must contain at least %d items"
-	ERROR_MAX_LEN_ARR = "Must contain no more than %d items"
+	ERROR_MIN_LEN_ARR = "Please provide at least %d items"
+	ERROR_MAX_LEN_ARR = "Please provide no more than %d items"
 
-	// general number validation errros
+	// general number validation errors
 	ERROR_MAX_EX = "Must be less than %v"
 	ERROR_MAX    = "Must be less than or equal to %v"
 	ERROR_MIN_EX = "Must be greater than %v"
