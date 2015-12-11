@@ -1,7 +1,7 @@
 package benchmarks
 
 import (
-	"bitbucket.org/activelytrain/jsonv"
+	"bitbucket.org/calendarbite/jsonv"
 	"bytes"
 	"encoding/json"
 	"reflect"
