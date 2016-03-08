@@ -28,6 +28,10 @@ func mkDate(y, m, d int) time.Time {
 	return time.Date(y, time.Month(m), d, 0, 0, 0, 0, time.UTC)
 }
 
+func mkDateTime(y, m, d, h, s, min int) time.Time {
+	return time.Date(y, time.Month(m), d, h, min, s, 0, time.UTC)
+}
+
 func tryParse(t SchemaType, json string, dest interface{}, want interface{}) error {
 	s := NewScanner(bytes.NewBufferString(json))
 
@@ -45,7 +49,7 @@ func tryParse(t SchemaType, json string, dest interface{}, want interface{}) err
 	// dest is a ptr, so get the actual value interface{}
 	val := reflect.ValueOf(dest).Elem().Interface()
 	if !reflect.DeepEqual(val, want) {
-		return fmt.Errorf("val: Got %v, want %v", val, want)
+		return fmt.Errorf("val: Got %v, want %v.", val, want)
 	}
 
 	return nil
@@ -95,6 +99,7 @@ func Test_SchemaTypeParse(t *testing.T) {
 		{String(), `"Unicode!! \u2318"`, "Unicode!! \u2318"},
 
 		{Date(), `"2015-05-21"`, mkDate(2015, 5, 21)},
+		{DateTime(), `"2022-05-21 11:11:11"`, mkDateTime(2022, 5, 21, 11, 11, 11)},
 
 		{Enum(Integer(), int64(1), int64(2)), "1", int64(1)},
 		{Enum(String(), "avail", "dud"), `"dud"`, "dud"},
@@ -253,6 +258,7 @@ func Test_SchemaTypeValidationErrors(t *testing.T) {
 		{String(MaxLen(2)), `"TOo long"`, new(string), []string{"/"}},
 
 		{Date(), `"4 Jan 2021"`, new(time.Time), []string{"/"}},
+		{DateTime(), `"2022-03-10T23:00:00.000Z"`, new(time.Time), []string{"/"}},
 
 		{Enum(Integer(), int64(1), int64(2)), "3", new(int64), []string{"/"}},
 		{Enum(String(), "avail", "dud"), `"dude"`, new(string), []string{"/"}},
