@@ -23,26 +23,20 @@ type Customer struct {
 }
 
 // Example phone number parser/validator
-func PhoneNumber() jsonv.SchemaType {
-	return jsonv.String(
-		jsonv.Pattern(`^+?[ 0-9]{6,}$`,
-			"Please enter a valid Phone number, it can start with '+'."),
-	)
-}
+var PhoneNumber = jsonv.String(
+	jsonv.Pattern(`^+?[ 0-9]{6,}$`, "Please enter a valid Phone number, it can start with '+'."),
+)
 
 // Example email parser/validator
-func EmailAddress() jsonv.SchemaType {
-	return jsonv.String(
-		jsonv.Pattern(`[@][a-zA-Z0-9-_.]+$`,
-			"Please enter an email address, i.e. contain an '@' followed by a domain."),
-	)
-}
+var EmailAddress = jsonv.String(
+	jsonv.Pattern(`[@][a-zA-Z0-9-_.]+$`, "Please enter an email address, i.e. contain an '@' followed by a domain."),
+)
 
 var CreateParser = jsonv.Parser(&Customer{},
 	jsonv.Struct(
 		jsonv.Prop("Name", jsonv.String()),
-		jsonv.PropWithDefault("Email", EmailAddress(), ""),
-		jsonv.PropWithDefault("Phone", PhoneNumber(), ""),
+		jsonv.PropWithDefault("Email", EmailAddress, ""),
+		jsonv.PropWithDefault("Phone", PhoneNumber, ""),
 		jsonv.PropWithDefault("ReminderSent", jsonv.Boolean(), false),
   )
 )
